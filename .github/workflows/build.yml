@@ -1,0 +1,36 @@
+name: Build executable
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      OS: linux darwin windows
+      ARCH: amd64 arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        run: |
+          mkdir -p ./bin
+          for os in $OS; do
+            for arch in $ARCH; do
+              GOOS=$os GOARCH=$arch go build -o ./bin/traefik-mhos_$os-$arch
+            done
+          done
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: traefik-mhos
+          path: ./bin/*
