@@ -28,9 +28,10 @@ jobs:
         run: |
           for os in $OS; do
             for arch in $ARCH; do
-              GOOS=$os GOARCH=$arch go build -o ./bin/traefik-mhos_$os-$arch
+              GOOS=$os GOARCH=$arch go build -o ./bin/traefik-mhos_$os-$arch &
             done
           done
+          wait
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
