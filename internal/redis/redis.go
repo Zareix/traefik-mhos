@@ -61,9 +61,17 @@ func contains(slice []string, item string) bool {
 }
 
 func Cleanup(ctx context.Context) {
-	current, err := client.SMembers(ctx, "mhos:*").Result()
+	var current []string
+	hosts, err := client.Keys(ctx, "mhos:*").Result()
 	if err != nil {
 		panic(err)
+	}
+	for _, key := range hosts {
+		hostsCurrent, err := client.SMembers(ctx, key).Result()
+		if err != nil {
+			panic(err)
+		}
+		current = append(current, hostsCurrent...)
 	}
 
 	fmt.Println("Current services:", current)
