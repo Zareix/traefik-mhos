@@ -1,0 +1,6 @@
+.git
+build.sh
+compose.dev.yml
+README.md
+renovate.json
+redis_data
