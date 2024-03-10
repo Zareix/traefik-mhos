@@ -37,7 +37,7 @@ services:
   traefik-mhos:
     image: ghcr.io/zareix/traefik-mhos
     environment:
-      - REDIS_ADDRESS=http://[ip]:6379
+      - REDIS_ADDRESS=[ip]:6379
       - REDIS_PASSWORD=password
       - REDIS_DB=0
       - HOST_IP=[ip]
