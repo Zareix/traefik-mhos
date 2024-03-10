@@ -60,8 +60,8 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func Cleanup(ctx context.Context, hostIP string) {
-	current, err := client.SMembers(ctx, hostIP).Result()
+func Cleanup(ctx context.Context) {
+	current, err := client.SMembers(ctx, config.AppConfig.HostIP).Result()
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func Cleanup(ctx context.Context, hostIP string) {
 	}
 
 	for _, key := range keys {
-		if key != hostIP && !contains(current, key) {
+		if key != config.AppConfig.HostIP && !contains(current, key) {
 			client.Del(ctx, key)
 		}
 	}

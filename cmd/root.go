@@ -18,7 +18,7 @@ func Run() {
 
 	redisClient := redis.NewClient(config.AppConfig.RedisAddress, config.AppConfig.RedisPassword, config.AppConfig.RedisDB)
 	defer redisClient.Close()
-	redisClient.FlushDB(ctx)
+	// redisClient.FlushDB(ctx)
 
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {
@@ -39,6 +39,8 @@ func Run() {
 	for _, container := range containers {
 		traefik.AddContainerToTraefik(ctx, dockerClient, container.ID)
 	}
+
+	redis.Cleanup(ctx)
 
 	listeners.ListenForNewContainers(ctx, dockerClient)
 	listeners.ListenForStoppedContainers(ctx, dockerClient)
