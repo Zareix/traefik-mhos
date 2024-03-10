@@ -2,7 +2,7 @@ package listeners
 
 import (
 	"context"
-	"fmt"
+	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/traefik"
 
 	"github.com/docker/docker/api/types"
@@ -20,15 +20,15 @@ func ListenForNewContainers(ctx context.Context, dockerClient *docker.Client) {
 	})
 
 	go func() {
-		fmt.Println("Listening for new containers")
+		log.Debug().Msg("Listening for new containers")
 		for {
 			select {
 			case event := <-startedContainersEventsStream:
-				fmt.Printf("Event: %s of container %s\n", event.Action, event.Actor.ID[:10])
+				log.Debug().Interface("action", event.Action).Str("containerId", event.Actor.ID).Msg("New event")
 				traefik.AddContainerToTraefik(ctx, dockerClient, event.Actor.ID)
 			case err := <-errors:
 				if err != nil {
-					fmt.Printf("Error: %s\n", err)
+					log.Error().Err(err).Msg("Event error")
 				}
 			}
 		}
@@ -45,15 +45,15 @@ func ListenForStoppedContainers(ctx context.Context, dockerClient *docker.Client
 	})
 
 	go func() {
-		fmt.Println("Listening for stopped containers")
+		log.Debug().Msg("Listening for stopped containers")
 		for {
 			select {
 			case event := <-stoppedContainersEventsStream:
-				fmt.Printf("Event: %s of container %s\n", event.Action, event.Actor.ID[:10])
+				log.Debug().Interface("action", event.Action).Str("container", event.Actor.ID).Msg("New event")
 				traefik.RemoveContainerFromTraefik(ctx, dockerClient, event.Actor.ID)
 			case err := <-errors:
 				if err != nil {
-					fmt.Printf("Error: %s\n", err)
+					log.Error().Err(err).Msg("Event error")
 				}
 			}
 		}

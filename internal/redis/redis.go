@@ -3,8 +3,10 @@ package redis
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"traefik-multi-hosts/internal/config"
+	"traefik-multi-hosts/internal/log"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -22,7 +24,7 @@ func NewClient(address string, password string, db int) *redis.Client {
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("Failed to connect to redis")
 	}
 
 	return client
@@ -30,6 +32,7 @@ func NewClient(address string, password string, db int) *redis.Client {
 
 func SaveService(ctx context.Context, serviceName string, kv map[string]string) {
 	for key, value := range kv {
+		log.Debug().Str("key", key).Str("value", value).Msg("Saving key-value pair")
 		client.Set(ctx, key, value, 0)
 	}
 
@@ -41,11 +44,13 @@ func RemoveService(ctx context.Context, serviceName string) {
 
 	keys, err := client.Keys(ctx, "*").Result()
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("Failed to get all redis stored keys")
+		return
 	}
 
 	for _, key := range keys {
 		if strings.Contains(key, fmt.Sprintf("/%s/", serviceName)) {
+			log.Debug().Str("key", key).Msg("Removing key")
 			client.Del(ctx, key)
 		}
 	}
@@ -64,21 +69,26 @@ func Cleanup(ctx context.Context) {
 	var current []string
 	hosts, err := client.Keys(ctx, "mhos:*").Result()
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("Failed to get all redis mhos:* stored keys")
+		return
 	}
 	for _, key := range hosts {
 		hostsCurrent, err := client.SMembers(ctx, key).Result()
 		if err != nil {
-			panic(err)
+			log.Error().Err(err).Str("key", key).Msg("Failed to get members of key")
+			return
 		}
 		current = append(current, hostsCurrent...)
 	}
 
-	fmt.Println("Current services:", current)
+	sort.Strings(current)
+
+	log.Info().Strs("services", current).Msg("Current services")
 
 	keys, err := client.Keys(ctx, "*").Result()
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("Failed to get all redis stored keys")
+		return
 	}
 
 	for _, key := range keys {

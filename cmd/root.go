@@ -2,19 +2,24 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/listeners"
+	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	docker "github.com/docker/docker/client"
+	"github.com/rs/zerolog"
 )
 
 func Run() {
 	ctx := context.Background()
+
+	zerolog.SetGlobalLevel(config.AppConfig.LogLevel)
+
+	log.Info().Msg("Starting traefik-mhos")
 
 	redisClient := redis.NewClient(config.AppConfig.RedisAddress, config.AppConfig.RedisPassword, config.AppConfig.RedisDB)
 	defer redisClient.Close()
@@ -22,10 +27,10 @@ func Run() {
 
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("Failed to create docker client")
 	}
 
-	fmt.Println("Running first start with existing containers")
+	log.Info().Msg("Running first start with existing containers")
 	filters := filters.NewArgs()
 	filters.Add("status", "running")
 	filters.Add("label", "traefik.enable=true")
@@ -33,8 +38,9 @@ func Run() {
 		Filters: filters,
 	})
 	if err != nil {
-		panic("Initial container list failed: " + err.Error())
+		log.Fatal().Err(err).Msg("Failed to list running containers")
 	}
+	log.Debug().Int("containers", len(containers)).Msg("Found running containers")
 
 	for _, container := range containers {
 		traefik.AddContainerToTraefik(ctx, dockerClient, container.ID)
