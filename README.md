@@ -8,7 +8,7 @@ Inspired by [jittering/traefik-kop](https://github.com/jittering/traefik-kop).
 
 ## Usage
 
-Create a Redis database (here using docker) along with traefik
+Create a Redis database alongside your Traefik instance and add it as a provider:
 
 ```yaml
 services:
