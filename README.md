@@ -8,7 +8,7 @@ Inspired by [jittering/traefik-kop](https://github.com/jittering/traefik-kop).
 
 ## Usage
 
-Create a Redis database (here using docker) along with traefik
+Create a Redis database alongside your Traefik instance and add it as a provider:
 
 ```yaml
 services:
@@ -37,10 +37,10 @@ services:
   traefik-mhos:
     image: ghcr.io/zareix/traefik-mhos
     environment:
-      - REDIS_ADDRESS=http://[ip]:6379
+      - REDIS_ADDRESS=[redis-host-ip]:6379
       - REDIS_PASSWORD=password
       - REDIS_DB=0
-      - HOST_IP=[ip]
+      - HOST_IP=[current-host-ip]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
