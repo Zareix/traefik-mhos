@@ -8,8 +8,17 @@ import (
 	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 
+	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 )
+
+func GetFirstExposedPort(container types.ContainerJSON) string {
+	for _, port := range container.HostConfig.PortBindings {
+		log.Debug().Str("port", port[0].HostPort).Str("container", container.Name).Msg("Found exposed port")
+		return port[0].HostPort
+	}
+	return ""
+}
 
 func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, containerId string) {
 	container, err := dockerClient.ContainerInspect(ctx, containerId)
@@ -17,14 +26,18 @@ func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, con
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
 	}
 
-	kv := make(map[string]string)
+	log.Debug().Str("id", containerId).Str("name", container.Name).Msg("Adding container to traefik")
 
+	kv := make(map[string]string)
 	var serviceName string
-	var servicePort string
+	servicePort := GetFirstExposedPort(container)
 	var routerRule string
 	for labelKey, labelValue := range container.Config.Labels {
 		if !strings.HasPrefix(labelKey, "traefik.http.services") && !strings.HasPrefix(labelKey, "traefik.http.routers") && !strings.HasPrefix(labelKey, "traefik.tcp.routers") {
 			continue
+		} else if serviceName == "" {
+			serviceName = strings.Split(labelKey, ".")[3]
+			log.Debug().Str("serviceName", serviceName).Msg("Found service name")
 		}
 
 		if strings.HasPrefix(labelKey, "traefik.http.routers.") && strings.HasSuffix(labelKey, ".rule") {
@@ -32,14 +45,9 @@ func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, con
 		}
 
 		if strings.HasSuffix(labelKey, "loadbalancer.server.port") {
-			servicePort = labelValue // TODO This is not the good port
+			servicePort = labelValue
 			log.Debug().Str("servicePort", servicePort).Msg("Found service port")
 			continue
-		}
-
-		if strings.HasPrefix(labelKey, "traefik.http.routers.") && strings.HasSuffix(labelKey, ".rule") {
-			serviceName = strings.Split(labelKey, ".")[3]
-			log.Debug().Str("serviceName", serviceName).Msg("Found service name")
 		}
 
 		labelKey = strings.ReplaceAll(labelKey, ".", "/")
