@@ -33,7 +33,7 @@ func SaveService(ctx context.Context, serviceName string, kv map[string]string) 
 		client.Set(ctx, key, value, 0)
 	}
 
-	client.SAdd(ctx, config.AppConfig.HostIP, serviceName)
+	client.SAdd(ctx, "mhos", serviceName)
 }
 
 func RemoveService(ctx context.Context, serviceName string) {
@@ -61,7 +61,7 @@ func contains(slice []string, item string) bool {
 }
 
 func Cleanup(ctx context.Context) {
-	current, err := client.SMembers(ctx, config.AppConfig.HostIP).Result()
+	current, err := client.SMembers(ctx, "mhos").Result()
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func Cleanup(ctx context.Context) {
 	}
 
 	for _, key := range keys {
-		if key != config.AppConfig.HostIP && !contains(current, key) {
+		if key != "mhos" && !contains(current, key) {
 			client.Del(ctx, key)
 		}
 	}
