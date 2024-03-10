@@ -37,10 +37,10 @@ services:
   traefik-mhos:
     image: ghcr.io/zareix/traefik-mhos
     environment:
-      - REDIS_ADDRESS=[ip]:6379
+      - REDIS_ADDRESS=[redis-host-ip]:6379
       - REDIS_PASSWORD=password
       - REDIS_DB=0
-      - HOST_IP=[ip]
+      - HOST_IP=[current-host-ip]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
