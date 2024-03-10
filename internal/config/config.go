@@ -25,7 +25,7 @@ func Init() {
 
 	AppConfig = &Config{
 		RedisAddress:  "localhost:6379",
-		RedisPassword: "password",
+		RedisPassword: "",
 		RedisDB:       0,
 		HostIP:        "localhost",
 		LogLevel:      zerolog.InfoLevel,

@@ -44,3 +44,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
+
+## Environment Variables
+
+| Name           | Description                                                     | Default          |
+| -------------- | --------------------------------------------------------------- | ---------------- |
+| REDIS_ADDRESS  | The Redis db address                                            | `localhost:6379` |
+| REDIS_PASSWORD | The Redis db password                                           | `""`             |
+| REDIS_DB       | The Redis db database                                           | `0`              |
+| HOST_IP        | The current host IP (where the traefik routers's will point to) | `"localhost"`    |
+| LOG_LEVEL      | Mininum log level (debug, info, warn, error, fatal)             | `info`           |
