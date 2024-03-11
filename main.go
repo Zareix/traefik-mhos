@@ -1,11 +1,11 @@
 package main
 
 import (
-	"traefik-multi-hosts/cmd"
+	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/web"
 )
 
 func main() {
-	cmd.Run()
+	mhos.Run()
 	web.Serve()
 }

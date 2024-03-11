@@ -1,4 +1,4 @@
-package cmd
+package mhos
 
 import (
 	"context"
@@ -20,9 +20,6 @@ func Run() {
 	zerolog.SetGlobalLevel(config.LogLevel())
 
 	log.Info().Msg("Starting traefik-mhos")
-
-	redisClient := redis.NewClient(ctx, config.RedisAddress(), config.RedisPassword(), config.RedisDB())
-	redisClient.Del(ctx, "mhos:"+config.HostIP())
 
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {

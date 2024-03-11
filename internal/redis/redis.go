@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/log"
@@ -18,11 +17,13 @@ type Service struct {
 
 var client *redis.Client
 
-func NewClient(ctx context.Context, address string, password string, db int) *redis.Client {
+func init() {
+	ctx := context.Background()
+
 	client = redis.NewClient(&redis.Options{
-		Addr:     address,
-		Password: password,
-		DB:       db,
+		Addr:     config.RedisAddress(),
+		Password: config.RedisPassword(),
+		DB:       config.RedisDB(),
 	})
 
 	_, err := client.Ping(ctx).Result()
@@ -30,7 +31,7 @@ func NewClient(ctx context.Context, address string, password string, db int) *re
 		log.Fatal().Err(err).Msg("Failed to connect to redis")
 	}
 
-	return client
+	client.Del(ctx, "mhos:"+config.HostIP())
 }
 
 func SaveService(ctx context.Context, serviceName string, kv map[string]string) {
@@ -39,11 +40,14 @@ func SaveService(ctx context.Context, serviceName string, kv map[string]string) 
 		client.Set(ctx, key, value, 0)
 	}
 
-	client.SAdd(ctx, "mhos:"+config.HostIP(), serviceName)
+	client.ZAdd(ctx, "mhos:"+config.HostIP(), redis.Z{
+		Score:  0,
+		Member: serviceName,
+	})
 }
 
 func RemoveService(ctx context.Context, serviceName string) {
-	client.SRem(ctx, "mhos:"+config.HostIP(), serviceName)
+	client.ZRem(ctx, "mhos:"+config.HostIP(), serviceName)
 
 	keys, err := client.Keys(ctx, "*").Result() // TODO: use scan
 	if err != nil {
@@ -76,15 +80,13 @@ func Cleanup(ctx context.Context) {
 		return
 	}
 	for _, key := range hosts {
-		hostsCurrent, err := client.SMembers(ctx, key).Result()
+		hostsCurrent, err := client.ZRange(ctx, key, 0, -1).Result()
 		if err != nil {
 			log.Error().Err(err).Str("key", key).Msg("Failed to get members of key")
 			return
 		}
 		current = append(current, hostsCurrent...)
 	}
-
-	sort.Strings(current)
 
 	log.Info().Strs("services", current).Msg("Current services")
 
@@ -123,13 +125,11 @@ func GetAllHostsWithServices(ctx context.Context) (map[string][]Service, error) 
 	if err != nil {
 		return nil, err
 	}
-	sort.Strings(hostsKeys)
 	for _, hostKey := range hostsKeys {
-		hostsServices, err := client.SMembers(ctx, hostKey).Result()
+		hostsServices, err := client.ZRange(ctx, hostKey, 0, -1).Result()
 		if err != nil {
 			return nil, err
 		}
-		sort.Strings(hostsServices)
 		hostKey = strings.TrimPrefix(hostKey, "mhos:")
 		for _, serviceName := range hostsServices {
 			var service Service
