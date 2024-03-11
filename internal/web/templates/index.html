@@ -32,10 +32,6 @@
       font-weight: 400;
     }
 
-    .service-list-item:not(:first-child) {
-      margin-top: 1rem;
-    }
-
     main {
       max-width: 800px;
       margin: 0 auto;
@@ -45,14 +41,72 @@
       margin-top: 0.5rem;
       margin-bottom: 0.5rem;
     }
+
+    .services-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+    }
+
+    .service-list-item {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    .service-list-item:not(:first-child) {
+      border-top: 1px solid #ddd;
+    }
+
+    .service-list-item button {
+      background-color: #eee;
+      color: #444;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      text-align: left;
+      border: none;
+      outline: none;
+      transition: 0.4s;
+    }
+
+    .service-list-item button.active {
+      background-color: #ccc;
+    }
+
+    .service-list-item ul {
+      margin-left: 0.5rem;
+      padding: 0 18px;
+      background-color: white;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+    }
   </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const acc = document.querySelectorAll(".service-list-item button");
+      console.log(acc);
+      let i;
+
+      for (i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function () {
+          this.classList.toggle("active");
+          var panel = this.nextElementSibling;
+          if (panel.style.maxHeight) {
+            panel.style.maxHeight = null;
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        });
+      }
+    })
+  </script>
 </head>
 
 <body>
   <h1>Traefik-MHOS</h1>
   <main>
     <h2>Hosts</h2>
-
     <ul>
       {{ range $host, $services := .Hosts }}
       <li>
@@ -62,10 +116,10 @@
           <span>(current)</span>
           {{ end }}
         </h3>
-        <ul>
+        <ul class="services-list">
           {{ range $services }}
           <li class="service-list-item">
-            <h4>{{ .Name }}</h4>
+            <button>{{ .Name }}</button>
             <ul>
               {{ range $key, $value := .Labels }}
               <li><strong>{{ $key }}</strong>: {{ $value }}</li>
