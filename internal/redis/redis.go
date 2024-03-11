@@ -11,6 +11,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type Service struct {
+	Name   string            `json:"name"`
+	Labels map[string]string `json:"labels"`
+}
+
 var ctx = context.Background()
 
 var client *redis.Client
@@ -96,4 +101,46 @@ func Cleanup(ctx context.Context) {
 			client.Del(ctx, key)
 		}
 	}
+}
+
+func getLabelsOfService(serviceName string) (map[string]string, error) {
+	keys, _, err := client.Scan(ctx, 0, fmt.Sprintf("*/%s/*", serviceName), 100).Result()
+	if err != nil {
+		return nil, err
+	}
+	labels := make(map[string]string)
+	for _, key := range keys {
+		label, err := client.Get(ctx, key).Result()
+		if err != nil {
+			return nil, err
+		}
+		labels[key] = label
+	}
+	return labels, nil
+}
+
+func GetAllHostsWithServices() (map[string][]Service, error) {
+	hosts := make(map[string][]Service)
+	hostsKeys, err := client.Keys(ctx, "mhos:*").Result()
+	if err != nil {
+		return nil, err
+	}
+	for _, hostKey := range hostsKeys {
+		hostsServices, err := client.SMembers(ctx, hostKey).Result()
+		if err != nil {
+			return nil, err
+		}
+		hostKey = strings.TrimPrefix(hostKey, "mhos:")
+		for _, serviceName := range hostsServices {
+			var service Service
+			service.Name = serviceName
+			labels, err := getLabelsOfService(serviceName)
+			if err != nil {
+				return nil, err
+			}
+			service.Labels = labels
+			hosts[hostKey] = append(hosts[hostKey], service)
+		}
+	}
+	return hosts, nil
 }

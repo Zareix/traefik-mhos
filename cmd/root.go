@@ -22,7 +22,6 @@ func Run() {
 	log.Info().Msg("Starting traefik-mhos")
 
 	redisClient := redis.NewClient(config.AppConfig.RedisAddress, config.AppConfig.RedisPassword, config.AppConfig.RedisDB)
-	defer redisClient.Close()
 	redisClient.Del(ctx, "mhos:"+config.AppConfig.HostIP)
 
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
@@ -50,6 +49,4 @@ func Run() {
 
 	listeners.ListenForNewContainers(ctx, dockerClient)
 	listeners.ListenForStoppedContainers(ctx, dockerClient)
-
-	select {}
 }

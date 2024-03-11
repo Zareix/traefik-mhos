@@ -8,6 +8,7 @@ Inspired by [jittering/traefik-kop](https://github.com/jittering/traefik-kop).
   - [Usage](#usage)
   - [Environment Variables](#environment-variables)
   - [Port discovery](#port-discovery)
+  - [API/Frontend](#apifrontend)
 
 ## Usage
 
@@ -66,3 +67,15 @@ Right now, traefik-mhos only reads the `traefik.http.services.<service-name>.loa
 Be careful, this port needs to point to the host's port, not to the internal container's port (contrary to the traefik version of this label).
 
 If this label is not found, traefik-mhos will default to the first exposed port of the container.
+
+## API/Frontend
+
+Traefik-mhos also exposes a simple API and frontend to list current hosts and their services.
+
+The API and the frontend are available on port `8888` by default. You can change the port by setting the `PORT` environment variable.
+
+Routes:
+
+- `GET /api/heath`: Health check
+- `GET /api/hosts`: List all hosts with their services
+- `GET /`: Frontend
