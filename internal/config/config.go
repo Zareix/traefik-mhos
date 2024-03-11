@@ -8,36 +8,36 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Config struct {
-	RedisAddress  string
-	RedisPassword string
-	RedisDB       int
+type config struct {
+	redisAddress  string
+	redisPassword string
+	redisDB       int
 
-	HostIP string
+	hostIP string
 
-	LogLevel zerolog.Level
+	logLevel zerolog.Level
 }
 
-var AppConfig *Config
+var appConfig *config
 
-func Init() {
+func init() {
 	log.Info().Msg("Initializing config")
 
-	AppConfig = &Config{
-		RedisAddress:  "localhost:6379",
-		RedisPassword: "",
-		RedisDB:       0,
-		HostIP:        "localhost",
-		LogLevel:      zerolog.InfoLevel,
+	appConfig = &config{
+		redisAddress:  "localhost:6379",
+		redisPassword: "",
+		redisDB:       0,
+		hostIP:        "localhost",
+		logLevel:      zerolog.InfoLevel,
 	}
 
 	if redisAddress := os.Getenv("REDIS_ADDRESS"); redisAddress != "" {
 		log.Info().Str("REDIS_ADDRESS", redisAddress).Msg("Using REDIS_ADDRESS env var")
-		AppConfig.RedisAddress = redisAddress
+		appConfig.redisAddress = redisAddress
 	}
 	if redisPassword := os.Getenv("REDIS_PASSWORD"); redisPassword != "" {
 		log.Info().Str("REDIS_PASSWORD", "***").Msg("Using REDIS_PASSWORD env var")
-		AppConfig.RedisPassword = redisPassword
+		appConfig.redisPassword = redisPassword
 	}
 	if redisDB := os.Getenv("REDIS_DB"); redisDB != "" {
 		db, err := strconv.Atoi(redisDB)
@@ -45,13 +45,13 @@ func Init() {
 			log.Fatal().Err(err).Msg("Error converting REDIS_DB to int")
 		} else {
 			log.Info().Int("REDIS_DB", db).Msg("Using REDIS_DB env var")
-			AppConfig.RedisDB = db
+			appConfig.redisDB = db
 		}
 	}
 
 	if hostIP := os.Getenv("HOST_IP"); hostIP != "" {
 		log.Info().Str("HOST_IP", hostIP).Msg("Using HOST_IP env var")
-		AppConfig.HostIP = hostIP
+		appConfig.hostIP = hostIP
 	}
 
 	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
@@ -60,8 +60,28 @@ func Init() {
 			log.Fatal().Err(err).Msg("Error parsing LOG_LEVEL")
 		} else {
 			log.Info().Str("LOG_LEVEL", level.String()).Msg("Using LOG_LEVEL env var")
-			AppConfig.LogLevel = level
+			appConfig.logLevel = level
 		}
 	}
 
+}
+
+func RedisAddress() string {
+	return appConfig.redisAddress
+}
+
+func RedisPassword() string {
+	return appConfig.redisPassword
+}
+
+func RedisDB() int {
+	return appConfig.redisDB
+}
+
+func HostIP() string {
+	return appConfig.hostIP
+}
+
+func LogLevel() zerolog.Level {
+	return appConfig.logLevel
 }

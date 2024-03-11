@@ -16,11 +16,9 @@ type Service struct {
 	Labels map[string]string `json:"labels"`
 }
 
-var ctx = context.Background()
-
 var client *redis.Client
 
-func NewClient(address string, password string, db int) *redis.Client {
+func NewClient(ctx context.Context, address string, password string, db int) *redis.Client {
 	client = redis.NewClient(&redis.Options{
 		Addr:     address,
 		Password: password,
@@ -41,13 +39,13 @@ func SaveService(ctx context.Context, serviceName string, kv map[string]string) 
 		client.Set(ctx, key, value, 0)
 	}
 
-	client.SAdd(ctx, "mhos:"+config.AppConfig.HostIP, serviceName)
+	client.SAdd(ctx, "mhos:"+config.HostIP(), serviceName)
 }
 
 func RemoveService(ctx context.Context, serviceName string) {
-	client.SRem(ctx, config.AppConfig.HostIP, serviceName)
+	client.SRem(ctx, "mhos:"+config.HostIP(), serviceName)
 
-	keys, err := client.Keys(ctx, "*").Result()
+	keys, err := client.Keys(ctx, "*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis stored keys")
 		return
@@ -72,7 +70,7 @@ func contains(slice []string, item string) bool {
 
 func Cleanup(ctx context.Context) {
 	var current []string
-	hosts, err := client.Keys(ctx, "mhos:*").Result()
+	hosts, err := client.Keys(ctx, "mhos:*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis mhos:* stored keys")
 		return
@@ -90,7 +88,7 @@ func Cleanup(ctx context.Context) {
 
 	log.Info().Strs("services", current).Msg("Current services")
 
-	keys, err := client.Keys(ctx, "*").Result()
+	keys, err := client.Keys(ctx, "*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis stored keys")
 		return
@@ -103,7 +101,7 @@ func Cleanup(ctx context.Context) {
 	}
 }
 
-func getLabelsOfService(serviceName string) (map[string]string, error) {
+func getLabelsOfService(ctx context.Context, serviceName string) (map[string]string, error) {
 	keys, _, err := client.Scan(ctx, 0, fmt.Sprintf("*/%s/*", serviceName), 1000).Result()
 	if err != nil {
 		return nil, err
@@ -119,22 +117,24 @@ func getLabelsOfService(serviceName string) (map[string]string, error) {
 	return labels, nil
 }
 
-func GetAllHostsWithServices() (map[string][]Service, error) {
+func GetAllHostsWithServices(ctx context.Context) (map[string][]Service, error) {
 	hosts := make(map[string][]Service)
-	hostsKeys, err := client.Keys(ctx, "mhos:*").Result()
+	hostsKeys, err := client.Keys(ctx, "mhos:*").Result() // TODO: use scan
 	if err != nil {
 		return nil, err
 	}
+	sort.Strings(hostsKeys)
 	for _, hostKey := range hostsKeys {
 		hostsServices, err := client.SMembers(ctx, hostKey).Result()
 		if err != nil {
 			return nil, err
 		}
+		sort.Strings(hostsServices)
 		hostKey = strings.TrimPrefix(hostKey, "mhos:")
 		for _, serviceName := range hostsServices {
 			var service Service
 			service.Name = serviceName
-			labels, err := getLabelsOfService(serviceName)
+			labels, err := getLabelsOfService(ctx, serviceName)
 			if err != nil {
 				return nil, err
 			}

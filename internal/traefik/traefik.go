@@ -69,9 +69,9 @@ func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, con
 
 	log.Debug().Str("serviceName", serviceName).Str("servicePort", servicePort).Msg("Adding service to traefik")
 	kv["traefik/http/routers/"+serviceName+"/service"] = serviceName
-	kv["traefik/http/services/"+serviceName+"/loadbalancer/servers/0/url"] = fmt.Sprintf("http://%s:%s", config.AppConfig.HostIP, servicePort)
+	kv["traefik/http/services/"+serviceName+"/loadbalancer/servers/0/url"] = fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)
 
-	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", config.AppConfig.HostIP, servicePort)).Msg("Adding service to traefik")
+	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)).Msg("Adding service to traefik")
 	redis.SaveService(ctx, serviceName, kv)
 }
 

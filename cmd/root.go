@@ -17,12 +17,12 @@ import (
 func Run() {
 	ctx := context.Background()
 
-	zerolog.SetGlobalLevel(config.AppConfig.LogLevel)
+	zerolog.SetGlobalLevel(config.LogLevel())
 
 	log.Info().Msg("Starting traefik-mhos")
 
-	redisClient := redis.NewClient(config.AppConfig.RedisAddress, config.AppConfig.RedisPassword, config.AppConfig.RedisDB)
-	redisClient.Del(ctx, "mhos:"+config.AppConfig.HostIP)
+	redisClient := redis.NewClient(ctx, config.RedisAddress(), config.RedisPassword(), config.RedisDB())
+	redisClient.Del(ctx, "mhos:"+config.HostIP())
 
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {
