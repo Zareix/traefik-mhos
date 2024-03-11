@@ -20,8 +20,21 @@ func Serve() {
 	templ := template.Must(template.New("").ParseFS(f, "templates/*.html"))
 	r.SetHTMLTemplate(templ)
 
-	r.GET("/api/health", health)
-	r.GET("/api/hosts", getAllServices)
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"health": "ok",
+		})
+	})
+	r.GET("/api/hosts", func(c *gin.Context) {
+		hosts, err := redis.GetAllHostsWithServices()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, hosts)
+	})
 	r.GET("/", func(c *gin.Context) {
 		hosts, err := redis.GetAllHostsWithServices()
 		if err != nil {
@@ -37,21 +50,4 @@ func Serve() {
 	})
 
 	r.Run()
-}
-
-func health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"health": "ok",
-	})
-}
-
-func getAllServices(c *gin.Context) {
-	hosts, err := redis.GetAllHostsWithServices()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, hosts)
 }

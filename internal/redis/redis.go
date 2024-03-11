@@ -104,7 +104,7 @@ func Cleanup(ctx context.Context) {
 }
 
 func getLabelsOfService(serviceName string) (map[string]string, error) {
-	keys, _, err := client.Scan(ctx, 0, fmt.Sprintf("*/%s/*", serviceName), 100).Result()
+	keys, _, err := client.Scan(ctx, 0, fmt.Sprintf("*/%s/*", serviceName), 1000).Result()
 	if err != nil {
 		return nil, err
 	}
