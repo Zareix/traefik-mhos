@@ -1,6 +1,8 @@
 package web
 
 import (
+	"embed"
+	"html/template"
 	"net/http"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/log"
@@ -9,10 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed templates/*
+var f embed.FS
+
 func Serve() {
 	log.Info().Msg("Starting web server")
 	r := gin.Default()
-	r.LoadHTMLGlob("templates/*.html")
+	templ := template.Must(template.New("").ParseFS(f, "templates/*.html"))
+	r.SetHTMLTemplate(templ)
 
 	r.GET("/api/health", health)
 	r.GET("/api/hosts", getAllServices)
