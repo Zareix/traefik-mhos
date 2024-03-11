@@ -17,7 +17,8 @@ FROM alpine:3.19 as runner
 ENV GIN_MODE=release
 ENV PORT=8888
 
-COPY --from=builder /app/traefik-mhos /app/traefik-mhos
-COPY ./templates /app/templates
+WORKDIR /app
+COPY --from=builder /app/traefik-mhos ./traefik-mhos
+COPY ./templates ./templates
 
-CMD ["/app/traefik-mhos"]
+CMD ["./traefik-mhos"]
