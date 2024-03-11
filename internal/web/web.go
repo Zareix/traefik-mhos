@@ -12,7 +12,7 @@ import (
 func Serve() {
 	log.Info().Msg("Starting web server")
 	r := gin.Default()
-	r.LoadHTMLGlob("internal/web/templates/*.html")
+	r.LoadHTMLGlob("templates/*.html")
 
 	r.GET("/api/health", health)
 	r.GET("/api/hosts", getAllServices)

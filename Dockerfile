@@ -18,5 +18,6 @@ ENV GIN_MODE=release
 ENV PORT=8888
 
 COPY --from=builder /app/traefik-mhos /app/traefik-mhos
+COPY ./templates /app/templates
 
 CMD ["/app/traefik-mhos"]
