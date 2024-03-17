@@ -31,6 +31,7 @@ func Serve() {
 
 	router.GET("/api/health", health)
 	router.GET("/api/hosts", getAllHostsWithServices)
+	router.POST("/api/scan", freshScan)
 	router.GET("/", serveIndexPage)
 
 	router.Run()

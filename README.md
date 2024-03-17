@@ -59,7 +59,8 @@ services:
 | REDIS_PASSWORD | The Redis db password                                           | `""`             |
 | REDIS_DB       | The Redis db name                                               | `0`              |
 | HOST_IP        | The current host IP (where the traefik routers's will point to) | `"localhost"`    |
-| LOG_LEVEL      | Mininum log level (debug, info, warn, error, fatal)             | `info`           |
+| LOG_LEVEL      | Minimum log level (debug, info, warn, error, fatal)             | `info`           |
+| LISTEN_EVENTS  | Listen to docker events                                         | `true`           |
 
 ## Port discovery
 

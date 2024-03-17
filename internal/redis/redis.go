@@ -31,7 +31,7 @@ func init() {
 		log.Fatal().Err(err).Msg("Failed to connect to redis")
 	}
 
-	client.Del(ctx, "mhos:"+config.HostIP())
+	CleanCurrentServices(ctx)
 }
 
 func SaveService(ctx context.Context, serviceName string, kv map[string]string) {
@@ -143,4 +143,8 @@ func GetAllHostsWithServices(ctx context.Context) (map[string][]Service, error) 
 		}
 	}
 	return hosts, nil
+}
+
+func CleanCurrentServices(ctx context.Context) {
+	client.Del(ctx, "mhos:"+config.HostIP())
 }

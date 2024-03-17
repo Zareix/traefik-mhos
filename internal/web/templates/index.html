@@ -24,6 +24,18 @@
     h3 {
       margin-top: 1rem;
       margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #freshScan {
+      margin-left: auto;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      border: none;
     }
 
     h4 {
@@ -84,7 +96,7 @@
   </style>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const acc = document.querySelectorAll(".service-list-item button");
+      const acc = document.querySelectorAll(".accordion button");
       console.log(acc);
       let i;
 
@@ -99,7 +111,24 @@
           }
         });
       }
-    })
+
+      const button = document.querySelector("#freshScan")
+      button.addEventListener("click", () => {
+        button.innerText = "Scanning...";
+        fetch("/api/scan", {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "ok") {
+              window.location.reload();
+            } else {
+              button.innerText = "Fresh-scan";
+              alert("Failed to scan");
+            }
+          });
+      });
+    });
   </script>
 </head>
 
@@ -114,11 +143,14 @@
           {{ $host }}
           {{ if eq $host $.CurrentHost }}
           <span>(current)</span>
+          <button id="freshScan">
+            Fresh-scan
+          </button>
           {{ end }}
         </h3>
         <ul class="services-list">
           {{ range $services }}
-          <li class="service-list-item">
+          <li class="service-list-item accordion">
             <button>{{ .Name }}</button>
             <ul>
               {{ range $key, $value := .Labels }}

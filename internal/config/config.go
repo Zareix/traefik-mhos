@@ -16,6 +16,8 @@ type config struct {
 	hostIP string
 
 	logLevel zerolog.Level
+
+	listenEvents bool
 }
 
 var appConfig *config
@@ -29,6 +31,7 @@ func init() {
 		redisDB:       0,
 		hostIP:        "localhost",
 		logLevel:      zerolog.InfoLevel,
+		listenEvents:  true,
 	}
 
 	if redisAddress := os.Getenv("REDIS_ADDRESS"); redisAddress != "" {
@@ -64,6 +67,16 @@ func init() {
 		}
 	}
 
+	if listenEvents := os.Getenv("LISTEN_EVENTS"); listenEvents != "" {
+		listen, err := strconv.ParseBool(listenEvents)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error parsing LISTEN_EVENTS")
+		} else {
+			log.Info().Bool("LISTEN_EVENTS", listen).Msg("Using LISTEN_EVENTS env var")
+			appConfig.listenEvents = listen
+		}
+	}
+
 }
 
 func RedisAddress() string {
@@ -84,4 +97,8 @@ func HostIP() string {
 
 func LogLevel() zerolog.Level {
 	return appConfig.logLevel
+}
+
+func ListenEvents() bool {
+	return appConfig.listenEvents
 }

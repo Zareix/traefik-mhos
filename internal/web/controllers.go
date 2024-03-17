@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/redis"
 
@@ -36,5 +37,18 @@ func serveIndexPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"Hosts":       hosts,
 		"CurrentHost": config.HostIP(),
+	})
+}
+
+func freshScan(c *gin.Context) {
+	err := mhos.FreshScan(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
 	})
 }

@@ -2,14 +2,15 @@ package traefik
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"traefik-multi-hosts/internal/config"
+	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 
 	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
 )
 
 func GetFirstExposedPort(container types.ContainerJSON) string {
@@ -20,10 +21,11 @@ func GetFirstExposedPort(container types.ContainerJSON) string {
 	return ""
 }
 
-func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, containerId string) {
-	container, err := dockerClient.ContainerInspect(ctx, containerId)
+func AddContainerToTraefik(ctx context.Context, containerId string) error {
+	container, err := docker.InspectContainer(ctx, containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
+		return err
 	}
 
 	log.Debug().Str("id", containerId).Str("name", container.Name).Msg("Adding container to traefik")
@@ -58,13 +60,15 @@ func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, con
 	}
 
 	if serviceName == "" {
+		err := errors.New("Container has no traefik labels, id: " + containerId)
 		log.Error().Str("containerId", containerId).Msg("Container has no traefik labels")
-		return
+		return err
 	}
 
 	if servicePort == "" {
+		err := errors.New("Service has no port: " + serviceName)
 		log.Error().Str("serviceName", serviceName).Msg("Service has no port")
-		return
+		return err
 	}
 
 	log.Debug().Str("serviceName", serviceName).Str("servicePort", servicePort).Msg("Adding service to traefik")
@@ -73,12 +77,13 @@ func AddContainerToTraefik(ctx context.Context, dockerClient *docker.Client, con
 
 	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)).Msg("Adding service to traefik")
 	redis.SaveService(ctx, serviceName, kv)
+	return nil
 }
 
-func RemoveContainerFromTraefik(ctx context.Context, dockerClient *docker.Client, containerId string) {
-	container, err := dockerClient.ContainerInspect(ctx, containerId)
+func RemoveContainerFromTraefik(ctx context.Context, containerId string) {
+	container, err := docker.InspectContainer(ctx, containerId)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
 	}
 
 	var serviceName string
