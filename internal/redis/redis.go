@@ -103,11 +103,12 @@ func Cleanup(ctx context.Context) {
 	}
 }
 
-func getLabelsOfService(ctx context.Context, serviceName string) (map[string]string, error) {
-	keys, _, err := client.Scan(ctx, 0, fmt.Sprintf("*/%s/*", serviceName), 1000).Result()
+func getAllLabels(ctx context.Context) (map[string]string, error) {
+	keys, err := scanKeys(ctx, "traefik/*")
 	if err != nil {
 		return nil, err
 	}
+
 	labels := make(map[string]string)
 	for _, key := range keys {
 		label, err := client.Get(ctx, key).Result()
@@ -119,26 +120,56 @@ func getLabelsOfService(ctx context.Context, serviceName string) (map[string]str
 	return labels, nil
 }
 
+func filterLabelsOfService(allLabels map[string]string, serviceName string) map[string]string {
+	serviceLabels := make(map[string]string)
+	for key, value := range allLabels {
+		if strings.Contains(key, fmt.Sprintf("/%s/", serviceName)) {
+			serviceLabels[key] = value
+		}
+	}
+	return serviceLabels
+}
+
+func scanKeys(ctx context.Context, pattern string) ([]string, error) {
+	var allKeys []string
+	var cursor uint64
+	for {
+		var err error
+		var keys []string
+		keys, cursor, err = client.Scan(ctx, cursor, pattern, 500).Result()
+		if err != nil {
+			log.Error().Err(err).Str("pattern", pattern).Msg("Failed to get all scan for pattenr")
+			return nil, err
+		}
+		allKeys = append(allKeys, keys...)
+		if cursor == 0 {
+			break
+		}
+	}
+	return allKeys, nil
+}
+
 func GetAllHostsWithServices(ctx context.Context) (map[string][]Service, error) {
 	hosts := make(map[string][]Service)
-	hostsKeys, err := client.Keys(ctx, "mhos:*").Result() // TODO: use scan
+	hostsKeys, err := scanKeys(ctx, "mhos:*")
 	if err != nil {
 		return nil, err
 	}
+
+	allTraefikLabels, err2 := getAllLabels(ctx)
+	if err2 != nil {
+		return nil, err2
+	}
 	for _, hostKey := range hostsKeys {
-		hostsServices, err := client.ZRange(ctx, hostKey, 0, -1).Result()
+		hostServices, err := client.ZRange(ctx, hostKey, 0, -1).Result()
 		if err != nil {
 			return nil, err
 		}
 		hostKey = strings.TrimPrefix(hostKey, "mhos:")
-		for _, serviceName := range hostsServices {
+		for _, serviceName := range hostServices {
 			var service Service
 			service.Name = serviceName
-			labels, err := getLabelsOfService(ctx, serviceName)
-			if err != nil {
-				return nil, err
-			}
-			service.Labels = labels
+			service.Labels = filterLabelsOfService(allTraefikLabels, serviceName)
 			hosts[hostKey] = append(hosts[hostKey], service)
 		}
 	}
