@@ -1,6 +1,6 @@
 module traefik-multi-hosts
 
-go 1.22.1
+go 1.22.2
 
 require (
 	github.com/docker/docker v25.0.3+incompatible
