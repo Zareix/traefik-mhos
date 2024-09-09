@@ -53,14 +53,14 @@ services:
 
 ## Environment Variables
 
-| Name           | Description                                                     | Default          |
-| -------------- | --------------------------------------------------------------- | ---------------- |
-| REDIS_ADDRESS  | The Redis db address                                            | `localhost:6379` |
-| REDIS_PASSWORD | The Redis db password                                           | `""`             |
-| REDIS_DB       | The Redis db name                                               | `0`              |
-| HOST_IP        | The current host IP (where the traefik routers's will point to) | `"localhost"`    |
-| LOG_LEVEL      | Minimum log level (debug, info, warn, error, fatal)             | `info`           |
-| LISTEN_EVENTS  | Listen to docker events                                         | `true`           |
+| Name           | Description                                                   | Default                                                  |
+| -------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| REDIS_ADDRESS  | The Redis db address                                          | `localhost:6379`                                         |
+| REDIS_PASSWORD | The Redis db password                                         | `<empty string>`                                         |
+| REDIS_DB       | The Redis db name                                             | `0`                                                      |
+| HOST_IP        | The current host IP (where the traefik routers will point to) | `localhost` (but you should change it to an IP/hostname) |
+| LOG_LEVEL      | Minimum log level (debug, info, warn, error, fatal)           | `info`                                                   |
+| LISTEN_EVENTS  | Listen to docker events                                       | `true`                                                   |
 
 ## Port discovery
 
