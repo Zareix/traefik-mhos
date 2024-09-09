@@ -1,0 +1,15 @@
+meta {
+  name: hosts
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/hosts
+  body: none
+  auth: none
+}
+
+assert {
+  res.body.localhost.length: gte 1
+}

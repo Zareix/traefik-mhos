@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "traefik-mhos",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
