@@ -5,13 +5,13 @@ import (
 	"sync"
 	"time"
 	"traefik-multi-hosts/internal/docker"
-	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/rs/zerolog/log"
 )
 
 func ProcessEvents(dockerClient docker.DockerClient, redisClient redis.RedisClient, eventType events.Action, containerId string) {

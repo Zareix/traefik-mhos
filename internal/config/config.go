@@ -3,9 +3,9 @@ package config
 import (
 	"os"
 	"strconv"
-	"traefik-multi-hosts/internal/log"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type config struct {
@@ -22,7 +22,7 @@ type config struct {
 
 var appConfig *config
 
-func init() {
+func Init() {
 	log.Info().Msg("Initializing config")
 
 	appConfig = &config{

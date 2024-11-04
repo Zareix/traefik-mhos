@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"traefik-multi-hosts/internal/config"
-	"traefik-multi-hosts/internal/log"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 )
 
 type RedisClient struct {

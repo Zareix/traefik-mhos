@@ -1,4 +1,4 @@
-package log
+package logging
 
 import (
 	"fmt"
@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
-var logger zerolog.Logger
-
-func init() {
+func Init() {
 	output := zerolog.ConsoleWriter{Out: os.Stdout}
 	output.FormatLevel = func(i interface{}) string {
 		var level = i.(string)
@@ -33,25 +32,6 @@ func init() {
 		return ""
 	}
 
-	logger = zerolog.New(output).With().Logger()
-}
+	log.Logger = zerolog.New(output).With().Logger()
 
-func Info() *zerolog.Event {
-	return logger.Info()
-}
-
-func Error() *zerolog.Event {
-	return logger.Error()
-}
-
-func Fatal() *zerolog.Event {
-	return logger.Fatal()
-}
-
-func Debug() *zerolog.Event {
-	return logger.Debug()
-}
-
-func Warn() *zerolog.Event {
-	return logger.Warn()
 }

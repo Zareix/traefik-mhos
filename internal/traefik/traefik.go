@@ -6,10 +6,10 @@ import (
 	"strings"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
-	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 
 	"github.com/docker/docker/api/types"
+	"github.com/rs/zerolog/log"
 )
 
 func GetFirstExposedPort(container types.ContainerJSON) string {

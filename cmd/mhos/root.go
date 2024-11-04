@@ -5,16 +5,13 @@ import (
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/listeners"
-	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
 
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func Run(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
-	zerolog.SetGlobalLevel(config.LogLevel())
-
 	log.Info().Msg("Starting traefik-mhos")
 	FreshScan(dockerClient, redisClient)
 

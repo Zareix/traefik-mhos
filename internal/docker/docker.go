@@ -2,13 +2,13 @@ package docker
 
 import (
 	"context"
-	"traefik-multi-hosts/internal/log"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/rs/zerolog/log"
 )
 
 type DockerClient struct {

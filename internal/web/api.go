@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"html/template"
 	"traefik-multi-hosts/internal/docker"
-	"traefik-multi-hosts/internal/log"
 	"traefik-multi-hosts/internal/redis"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 //go:embed templates/*
