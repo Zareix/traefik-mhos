@@ -10,17 +10,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type RedisClient struct {
+	ctx context.Context
+	API *redis.Client
+}
+
 type Service struct {
 	Name   string            `json:"name"`
 	Labels map[string]string `json:"labels"`
 }
 
-var client *redis.Client
-
-func init() {
-	ctx := context.Background()
-
-	client = redis.NewClient(&redis.Options{
+func New(ctx context.Context) (*RedisClient, error) {
+	client := redis.NewClient(&redis.Options{
 		Addr:     config.RedisAddress(),
 		Password: config.RedisPassword(),
 		DB:       config.RedisDB(),
@@ -31,25 +32,29 @@ func init() {
 		log.Fatal().Err(err).Msg("Failed to connect to redis")
 	}
 
-	CleanCurrentServices(ctx)
+	redisClient := &RedisClient{ctx, client}
+
+	redisClient.CleanCurrentServices()
+
+	return redisClient, nil
 }
 
-func SaveService(ctx context.Context, serviceName string, kv map[string]string) {
+func (r *RedisClient) SaveService(serviceName string, kv map[string]string) {
 	for key, value := range kv {
 		log.Debug().Str("key", key).Str("value", value).Msg("Saving key-value pair")
-		client.Set(ctx, key, value, 0)
+		r.API.Set(r.ctx, key, value, 0)
 	}
 
-	client.ZAdd(ctx, "mhos:"+config.HostIP(), redis.Z{
+	r.API.ZAdd(r.ctx, "mhos:"+config.HostIP(), redis.Z{
 		Score:  0,
 		Member: serviceName,
 	})
 }
 
-func RemoveService(ctx context.Context, serviceName string) {
-	client.ZRem(ctx, "mhos:"+config.HostIP(), serviceName)
+func (r *RedisClient) RemoveService(serviceName string) {
+	r.API.ZRem(r.ctx, "mhos:"+config.HostIP(), serviceName)
 
-	keys, err := client.Keys(ctx, "*").Result() // TODO: use scan
+	keys, err := r.API.Keys(r.ctx, "*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis stored keys")
 		return
@@ -58,7 +63,7 @@ func RemoveService(ctx context.Context, serviceName string) {
 	for _, key := range keys {
 		if strings.Contains(key, fmt.Sprintf("/%s/", serviceName)) {
 			log.Debug().Str("key", key).Msg("Removing key")
-			client.Del(ctx, key)
+			r.API.Del(r.ctx, key)
 		}
 	}
 }
@@ -72,15 +77,15 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func Cleanup(ctx context.Context) {
+func (r *RedisClient) Cleanup() {
 	var current []string
-	hosts, err := client.Keys(ctx, "mhos:*").Result() // TODO: use scan
+	hosts, err := r.API.Keys(r.ctx, "mhos:*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis mhos:* stored keys")
 		return
 	}
 	for _, key := range hosts {
-		hostsCurrent, err := client.ZRange(ctx, key, 0, -1).Result()
+		hostsCurrent, err := r.API.ZRange(r.ctx, key, 0, -1).Result()
 		if err != nil {
 			log.Error().Err(err).Str("key", key).Msg("Failed to get members of key")
 			return
@@ -90,7 +95,7 @@ func Cleanup(ctx context.Context) {
 
 	log.Info().Strs("services", current).Msg("Current services")
 
-	keys, err := client.Keys(ctx, "*").Result() // TODO: use scan
+	keys, err := r.API.Keys(r.ctx, "*").Result() // TODO: use scan
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all redis stored keys")
 		return
@@ -98,20 +103,57 @@ func Cleanup(ctx context.Context) {
 
 	for _, key := range keys {
 		if !strings.HasPrefix(key, "mhos") && !contains(current, key) {
-			client.Del(ctx, key)
+			r.API.Del(r.ctx, key)
 		}
 	}
 }
 
-func getAllLabels(ctx context.Context) (map[string]string, error) {
-	keys, err := scanKeys(ctx, "traefik/*")
+func (r *RedisClient) GetAllHostsWithServices() (map[string][]Service, error) {
+	hosts := make(map[string][]Service)
+	hostsKeys, err := r.scanKeys("mhos:*")
+	if err != nil {
+		return nil, err
+	}
+
+	allTraefikLabels, err2 := r.getAllLabels()
+	if err2 != nil {
+		return nil, err2
+	}
+	for _, hostKey := range hostsKeys {
+		hostServices, err := r.API.ZRange(r.ctx, hostKey, 0, -1).Result()
+		if err != nil {
+			return nil, err
+		}
+		hostKey = strings.TrimPrefix(hostKey, "mhos:")
+		for _, serviceName := range hostServices {
+			var service Service
+			service.Name = serviceName
+			service.Labels = filterLabelsOfService(allTraefikLabels, serviceName)
+			hosts[hostKey] = append(hosts[hostKey], service)
+		}
+	}
+	return hosts, nil
+}
+
+func (r *RedisClient) CleanCurrentServices() {
+	r.API.Del(r.ctx, "mhos:"+config.HostIP())
+}
+
+func (r *RedisClient) Close() {
+	if r.API != nil {
+		_ = r.API.Close()
+	}
+}
+
+func (r *RedisClient) getAllLabels() (map[string]string, error) {
+	keys, err := r.scanKeys("traefik/*")
 	if err != nil {
 		return nil, err
 	}
 
 	labels := make(map[string]string)
 	for _, key := range keys {
-		label, err := client.Get(ctx, key).Result()
+		label, err := r.API.Get(r.ctx, key).Result()
 		if err != nil {
 			return nil, err
 		}
@@ -130,13 +172,13 @@ func filterLabelsOfService(allLabels map[string]string, serviceName string) map[
 	return serviceLabels
 }
 
-func scanKeys(ctx context.Context, pattern string) ([]string, error) {
+func (r *RedisClient) scanKeys(pattern string) ([]string, error) {
 	var allKeys []string
 	var cursor uint64
 	for {
 		var err error
 		var keys []string
-		keys, cursor, err = client.Scan(ctx, cursor, pattern, 500).Result()
+		keys, cursor, err = r.API.Scan(r.ctx, cursor, pattern, 500).Result()
 		if err != nil {
 			log.Error().Err(err).Str("pattern", pattern).Msg("Failed to get all scan for pattenr")
 			return nil, err
@@ -147,35 +189,4 @@ func scanKeys(ctx context.Context, pattern string) ([]string, error) {
 		}
 	}
 	return allKeys, nil
-}
-
-func GetAllHostsWithServices(ctx context.Context) (map[string][]Service, error) {
-	hosts := make(map[string][]Service)
-	hostsKeys, err := scanKeys(ctx, "mhos:*")
-	if err != nil {
-		return nil, err
-	}
-
-	allTraefikLabels, err2 := getAllLabels(ctx)
-	if err2 != nil {
-		return nil, err2
-	}
-	for _, hostKey := range hostsKeys {
-		hostServices, err := client.ZRange(ctx, hostKey, 0, -1).Result()
-		if err != nil {
-			return nil, err
-		}
-		hostKey = strings.TrimPrefix(hostKey, "mhos:")
-		for _, serviceName := range hostServices {
-			var service Service
-			service.Name = serviceName
-			service.Labels = filterLabelsOfService(allTraefikLabels, serviceName)
-			hosts[hostKey] = append(hosts[hostKey], service)
-		}
-	}
-	return hosts, nil
-}
-
-func CleanCurrentServices(ctx context.Context) {
-	client.Del(ctx, "mhos:"+config.HostIP())
 }

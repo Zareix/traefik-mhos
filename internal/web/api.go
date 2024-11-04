@@ -4,7 +4,9 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/log"
+	"traefik-multi-hosts/internal/redis"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +14,7 @@ import (
 //go:embed templates/*
 var f embed.FS
 
-func Serve() {
+func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 	log.Info().Msg("Starting web server")
 	router := gin.New()
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
@@ -30,9 +32,15 @@ func Serve() {
 	router.Use(gin.Recovery())
 
 	router.GET("/api/health", health)
-	router.GET("/api/hosts", getAllHostsWithServices)
-	router.POST("/api/scan", freshScan)
-	router.GET("/", serveIndexPage)
+	router.GET("/api/hosts", func(c *gin.Context) {
+		getAllHostsWithServices(c, redisClient)
+	})
+	router.POST("/api/scan", func(c *gin.Context) {
+		freshScan(c, dockerClient, redisClient)
+	})
+	router.GET("/", func(c *gin.Context) {
+		serveIndexPage(c, redisClient)
+	})
 
 	router.Run()
 }

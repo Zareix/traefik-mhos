@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/config"
+	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 
 	"github.com/gin-gonic/gin"
 )
 
-func getAllHostsWithServices(c *gin.Context) {
-	hosts, err := redis.GetAllHostsWithServices(c.Request.Context())
+func getAllHostsWithServices(c *gin.Context, redisClient redis.RedisClient) {
+	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -26,8 +27,8 @@ func health(c *gin.Context) {
 	})
 }
 
-func serveIndexPage(c *gin.Context) {
-	hosts, err := redis.GetAllHostsWithServices(c.Request.Context())
+func serveIndexPage(c *gin.Context, redisClient redis.RedisClient) {
+	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -40,8 +41,8 @@ func serveIndexPage(c *gin.Context) {
 	})
 }
 
-func freshScan(c *gin.Context) {
-	err := mhos.FreshScan(c.Request.Context())
+func freshScan(c *gin.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+	err := mhos.FreshScan(dockerClient, redisClient)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

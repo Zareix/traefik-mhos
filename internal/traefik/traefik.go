@@ -1,7 +1,6 @@
 package traefik
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,8 +20,8 @@ func GetFirstExposedPort(container types.ContainerJSON) string {
 	return ""
 }
 
-func AddContainerToTraefik(ctx context.Context, containerId string) error {
-	container, err := docker.InspectContainer(ctx, containerId)
+func AddContainerToTraefik(dockerClient docker.DockerClient, redisClient redis.RedisClient, containerId string) error {
+	container, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
 		return err
@@ -76,12 +75,12 @@ func AddContainerToTraefik(ctx context.Context, containerId string) error {
 	kv["traefik/http/services/"+serviceName+"/loadbalancer/servers/0/url"] = fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)
 
 	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)).Msg("Adding service to traefik")
-	redis.SaveService(ctx, serviceName, kv)
+	redisClient.SaveService(serviceName, kv)
 	return nil
 }
 
-func RemoveContainerFromTraefik(ctx context.Context, containerId string) {
-	container, err := docker.InspectContainer(ctx, containerId)
+func RemoveContainerFromTraefik(dockerClient docker.DockerClient, redisClient redis.RedisClient, containerId string) {
+	container, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
 	}
@@ -100,5 +99,5 @@ func RemoveContainerFromTraefik(ctx context.Context, containerId string) {
 	}
 
 	log.Info().Str("serviceName", serviceName).Msg("Removing service from traefik")
-	redis.RemoveService(ctx, serviceName)
+	redisClient.RemoveService(serviceName)
 }
