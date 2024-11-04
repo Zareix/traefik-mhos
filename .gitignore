@@ -28,3 +28,5 @@ go.work
 
 redis_data/
 bin/
+cpu.prof
+test.sh

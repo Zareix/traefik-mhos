@@ -22,8 +22,7 @@ func Run() {
 	FreshScan(ctx)
 
 	if config.ListenEvents() {
-		listeners.ListenForNewContainers(ctx)
-		listeners.ListenForStoppedContainers(ctx)
+		listeners.ListenForContainersEvent(ctx)
 	}
 }
 
