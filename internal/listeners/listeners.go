@@ -27,12 +27,23 @@ func ProcessEvents(dockerClient docker.DockerClient, redisClient redis.RedisClie
 }
 
 func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+	for {
+		err := listenForContainersEvent(ctx, dockerClient, redisClient)
+		if err != nil {
+			log.Error().Err(err).Msg("Error listening for containers event")
+			continue
+		}
+		return
+	}
+}
+
+func listenForContainersEvent(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) error {
 	eventsFilters := filters.NewArgs()
 	eventsFilters.Add("type", "container")
 	eventsFilters.Add("event", "stop")
 	eventsFilters.Add("event", "start")
 	eventsFilters.Add("label", "traefik.enable=true")
-	startedContainersEventsStream, errors := dockerClient.Events(types.EventsOptions{
+	containersEventsStream, errors := dockerClient.Events(types.EventsOptions{
 		Filters: eventsFilters,
 	})
 
@@ -42,7 +53,7 @@ func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerCli
 	log.Debug().Msg("Listening for new containers")
 	for {
 		select {
-		case event := <-startedContainersEventsStream:
+		case event := <-containersEventsStream:
 			log.Debug().Interface("action", event.Action).Str("containerId", event.Actor.ID).Msg("New event")
 			sem <- struct{}{}
 			wg.Add(1)
@@ -54,11 +65,11 @@ func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerCli
 				ProcessEvents(dockerClient, redisClient, event.Action, event.Actor.ID)
 			}()
 		case err := <-errors:
-			log.Error().Err(err).Msg("Event error")
+			return err
 		case <-ctx.Done():
 			log.Debug().Msg("Context cancelled, waiting for processing to complete...")
 			wg.Wait()
-			return
+			return nil
 		}
 	}
 }

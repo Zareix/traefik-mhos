@@ -13,6 +13,7 @@ import (
 
 func Run(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 	log.Info().Msg("Starting traefik-mhos")
+
 	FreshScan(dockerClient, redisClient)
 
 	if config.ListenEvents() {
