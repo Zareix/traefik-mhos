@@ -12,7 +12,7 @@ COPY . .
 RUN go build -o /app/traefik-mhos
 
 
-FROM alpine:3.20 as runner
+FROM alpine:3.21 as runner
 
 ENV GIN_MODE=release
 ENV PORT=8888
