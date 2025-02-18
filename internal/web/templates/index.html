@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Traefik-MHOS</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="/static/css/style.css" />
   <script>
@@ -43,16 +44,17 @@
           </button>
           {{ end }}
         </h3>
-        <ul class="list-none p-0 mt-4">
+        <ul class="list-none p-0 mt-4" x-data="{ openedTab: '' }">
           {{ range $services }}
-          <li class="my-0 not-first:border-t border-gray-300" x-data="{ open: false }">
+          <li class="my-0 not-first:border-t border-gray-300">
             <button
               class="bg-slate-200 py-4 text-slate-900 cursor-pointer px-4 w-full text-left border-none outline-none"
-              :class="open ? '!bg-slate-100' : ''" @click="open = !open">
+              :class="open ? '!bg-slate-100' : ''"
+              @click="openedTab = (openedTab === '{{ .Name }}' ? '' : '{{ .Name }}')">
               {{ .Name }}
             </button>
-            <ul class="ml-2 py-0 px-4 overflow-hidden max-h-0 bg-white transition-[max-height]"
-              :style="{ maxHeight: open ? $el.scrollHeight + 'px' : '0' }">
+            <ul class="ml-2 py-0 px-4 overflow-hidden bg-white transition-[max-height]"
+              x-show="openedTab === '{{ .Name }}'" x-collapse>
               {{ range $key, $value := .Labels }}
               <li><strong>{{ $key }}</strong>: {{ $value }}</li>
               {{ end }}
