@@ -22,7 +22,7 @@ build/tailwind:
 build/server:
 	$(foreach os,$(OS),\
 		$(foreach arch,$(ARCH),\
-			GOOS=$(os) GOARCH=$(arch) go build -o $(BUILD_DIR)/$(BINARY_NAME)_$(os)-$(arch)$(if $(filter windows,$(os)),.exe,);\
+			GIN_MODE=release GOOS=$(os) GOARCH=$(arch) go build -o $(BUILD_DIR)/$(BINARY_NAME)_$(os)-$(arch)$(if $(filter windows,$(os)),.exe,);\
 		)\
 	)
 
