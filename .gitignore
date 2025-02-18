@@ -30,3 +30,6 @@ redis_data/
 bin/
 cpu.prof
 test.sh
+
+node_modules/
+internal/web/static/css/style.css

@@ -1,23 +1,36 @@
-FROM golang:1.23.4-alpine3.19 as builder
+FROM oven/bun:1.2.2-alpine AS bun_builder
 
 WORKDIR /app
 
-COPY go.mod .
-COPY go.sum .
+COPY package.json bun.lock ./
+
+RUN bun install
+
+COPY internal/web/static/css/input.css .
+
+RUN bun run --bun tailwindcss -i input.css -o style.css --minify
+
+
+FROM golang:1.23.4-alpine3.19 AS go_builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
 
 RUN go mod download
 
 COPY . .
+COPY --from=bun_builder /app/style.css /app/internal/web/static/css/style.css
 
 RUN go build -o /app/traefik-mhos
 
 
-FROM alpine:3.21 as runner
+FROM alpine:3.21 AS runner
 
 ENV GIN_MODE=release
 ENV PORT=8888
 
-COPY --from=builder /app/traefik-mhos /app/traefik-mhos
+COPY --from=go_builder /app/traefik-mhos /app/traefik-mhos
 
 HEALTHCHECK CMD wget -qO- http://localhost:$PORT/api/health || exit 1
 

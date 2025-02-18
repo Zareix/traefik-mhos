@@ -7,12 +7,16 @@ import (
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
 //go:embed templates/*
-var f embed.FS
+var templateFS embed.FS
+
+//go:embed static/*
+var staticFS embed.FS
 
 func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 	log.Info().Msg("Starting web server")
@@ -28,7 +32,7 @@ func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 			param.ErrorMessage,
 		)
 	}))
-	router.SetHTMLTemplate(template.Must(template.New("").ParseFS(f, "templates/*.html")))
+	router.SetHTMLTemplate(template.Must(template.New("").ParseFS(templateFS, "templates/*.html")))
 	router.Use(gin.Recovery())
 
 	router.GET("/api/health", health)
@@ -41,6 +45,7 @@ func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 	router.GET("/", func(c *gin.Context) {
 		serveIndexPage(c, redisClient)
 	})
+	router.Use(static.Serve("/", static.EmbedFolder(staticFS, ".")))
 
 	router.Run()
 }

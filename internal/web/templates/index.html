@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Traefik-MHOS</title>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
   <script>
     function freshScan(element) {
       element.innerText = "Scanning...";
@@ -24,124 +25,45 @@
     }
   </script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    h1 {
-      margin-top: 2rem;
-      margin-bottom: 0.5rem;
-      text-align: center;
-    }
-
-    h2 {
-      margin-top: 2rem;
-      margin-bottom: 0;
-    }
-
-    h3 {
-      margin-top: 1rem;
-      margin-bottom: 0;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    h3 span {
-      font-weight: 500;
-      font-style: italic;
-    }
-
-    #freshScan {
-      margin-left: auto;
-      background-color: #4caf50;
-      color: white;
-      cursor: pointer;
-      padding: 0.5rem 1rem;
-      border: none;
-    }
-
     h4 {
       margin-top: 0;
       margin-bottom: 0;
       font-weight: 400;
     }
 
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    li {
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .services-list {
-      list-style: none;
-      padding: 0;
-      margin-top: 1rem;
-    }
-
-    .service-list-item {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-
-    .service-list-item:not(:first-child) {
-      border-top: 1px solid #ddd;
-    }
-
-    .service-list-item button {
-      background-color: #eee;
-      color: #444;
-      cursor: pointer;
-      padding: 18px;
-      width: 100%;
-      text-align: left;
-      border: none;
-      outline: none;
-      transition: 0.4s;
-    }
-
     .service-list-item button.active {
       background-color: #ccc;
-    }
-
-    .service-list-item ul {
-      margin-left: 0.5rem;
-      padding: 0 18px;
-      background-color: white;
-      overflow: hidden;
-      transition: max-height 0.2s ease-out;
-      max-height: 0;
     }
   </style>
 </head>
 
 <body>
-  <h1>Traefik-MHOS</h1>
-  <main>
-    <h2>Hosts</h2>
+  <h1 class="mt-8 mb-2 text-center text-4xl font-bold">Traefik-MHOS</h1>
+  <main class="max-w-3xl mx-auto">
+    <h2 class="mt-8 text-2xl font-bold">Hosts</h2>
     <ul>
       {{ range $host, $services := .Hosts }}
       <li x-data="">
-        <h3>
+        <h3 class="mt-4 flex items-center gap-2 text-xl font-bold">
           {{ $host }}
           {{ if eq $host $.CurrentHost }}
-          <span>- Current</span>
-          <button id="freshScan" @click="freshScan($el)">
+          <span class="italic font-normal">- Current</span>
+          <button class="ml-auto bg-green-500 font-medium text-white cursor-pointer px-2 py-1 text-base"
+            @click="freshScan($el)">
             Fresh-scan
           </button>
           {{ end }}
         </h3>
-        <ul class="services-list">
+        <ul class="list-none p-0 mt-4">
           {{ range $services }}
-          <li class="service-list-item" x-data="{ open: false }">
-            <button @click="open = !open">
+          <li class="my-0 not-first:border-t border-gray-300" x-data="{ open: false }">
+            <button
+              class="bg-slate-200 py-4 text-slate-900 cursor-pointer px-4 w-full text-left border-none outline-none"
+              :class="open ? '!bg-slate-100' : ''" @click="open = !open">
               {{ .Name }}
             </button>
-            <ul :style="{ maxHeight: open ? $el.scrollHeight + 'px' : '0' }">
+            <ul class="ml-2 py-0 px-4 overflow-hidden max-h-0 bg-white transition-[max-height]"
+              :style="{ maxHeight: open ? $el.scrollHeight + 'px' : '0' }">
               {{ range $key, $value := .Labels }}
               <li><strong>{{ $key }}</strong>: {{ $value }}</li>
               {{ end }}
