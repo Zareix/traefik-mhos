@@ -5,6 +5,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Traefik-MHOS</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script>
+    function freshScan(element) {
+      element.innerText = "Scanning...";
+      fetch("/api/scan", {
+        method: "POST",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "ok") {
+            window.location.reload();
+          } else {
+            element.innerText = "Fresh-scan";
+            alert("Failed to scan");
+          }
+        });
+    }
+  </script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -27,6 +45,11 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    h3 span {
+      font-weight: 500;
+      font-style: italic;
     }
 
     #freshScan {
@@ -89,47 +112,11 @@
       margin-left: 0.5rem;
       padding: 0 18px;
       background-color: white;
-      max-height: 0;
       overflow: hidden;
       transition: max-height 0.2s ease-out;
+      max-height: 0;
     }
   </style>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const acc = document.querySelectorAll(".accordion button");
-      console.log(acc);
-      let i;
-
-      for (i = 0; i < acc.length; i++) {
-        acc[i].addEventListener("click", function () {
-          this.classList.toggle("active");
-          var panel = this.nextElementSibling;
-          if (panel.style.maxHeight) {
-            panel.style.maxHeight = null;
-          } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-          }
-        });
-      }
-
-      const button = document.querySelector("#freshScan")
-      button.addEventListener("click", () => {
-        button.innerText = "Scanning...";
-        fetch("/api/scan", {
-          method: "POST",
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.status === "ok") {
-              window.location.reload();
-            } else {
-              button.innerText = "Fresh-scan";
-              alert("Failed to scan");
-            }
-          });
-      });
-    });
-  </script>
 </head>
 
 <body>
@@ -138,21 +125,23 @@
     <h2>Hosts</h2>
     <ul>
       {{ range $host, $services := .Hosts }}
-      <li>
+      <li x-data="">
         <h3>
           {{ $host }}
           {{ if eq $host $.CurrentHost }}
-          <span>(current)</span>
-          <button id="freshScan">
+          <span>- Current</span>
+          <button id="freshScan" @click="freshScan($el)">
             Fresh-scan
           </button>
           {{ end }}
         </h3>
         <ul class="services-list">
           {{ range $services }}
-          <li class="service-list-item accordion">
-            <button>{{ .Name }}</button>
-            <ul>
+          <li class="service-list-item" x-data="{ open: false }">
+            <button @click="open = !open">
+              {{ .Name }}
+            </button>
+            <ul :style="{ maxHeight: open ? $el.scrollHeight + 'px' : '0' }">
               {{ range $key, $value := .Labels }}
               <li><strong>{{ $key }}</strong>: {{ $value }}</li>
               {{ end }}

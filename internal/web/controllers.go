@@ -13,7 +13,7 @@ import (
 func getAllHostsWithServices(c *gin.Context, redisClient redis.RedisClient) {
 	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return

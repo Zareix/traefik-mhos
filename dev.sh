@@ -6,4 +6,4 @@ export LOG_LEVEL=debug
 export PORT=8888
 export LISTEN_EVENTS=true
 
-go run main.go
+gow -e=go,mod,html run .
