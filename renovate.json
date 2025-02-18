@@ -13,5 +13,29 @@
       ],
       "automerge": true
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        ".github/workflows/*.yaml"
+      ],
+      "matchStrings": [
+        "  BUN_VERSION: (?<currentValue>.*?)\\n"
+      ],
+      "depNameTemplate": "oven-sh/bun",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        ".github/workflows/*.yaml"
+      ],
+      "matchStrings": [
+        "  GO_VERSION: (?<currentValue>.*?)\\n"
+      ],
+      "depNameTemplate": "golang/go",
+      "datasourceTemplate": "github-releases"
+    }
   ]
 }

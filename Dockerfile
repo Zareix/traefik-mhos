@@ -6,7 +6,7 @@ COPY package.json bun.lock ./
 
 RUN bun install
 
-COPY internal/web/static/css/input.css .
+COPY internal/web/static/css/input.css internal/web/templates/ ./
 
 RUN bun run --bun tailwindcss -i input.css -o style.css --minify
 
