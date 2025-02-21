@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/docker/docker v25.0.8+incompatible
 	github.com/gin-gonic/gin v1.10.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.1
 	github.com/rs/zerolog v1.33.0
 )
 
