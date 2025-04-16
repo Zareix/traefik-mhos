@@ -1,7 +1,5 @@
 {
   "name": "traefik-multi-hosts",
-  "module": "src/index.ts",
-  "type": "module",
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.4",
     "@types/bun": "latest",
