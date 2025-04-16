@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"context"
+	"time"
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
@@ -13,10 +14,17 @@ import (
 )
 
 func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+	retries := 0
 	for {
 		err := listenForContainersEvent(ctx, dockerClient, redisClient)
 		if err != nil {
-			log.Error().Err(err).Msg("Error listening for containers event")
+			if retries > 3 {
+				log.Fatal().Err(err).Msg("Failed to listen for containers event")
+				panic(err)
+			}
+			retries++
+			log.Error().Err(err).Msg("Could not listen for containers event, retrying")
+			time.Sleep(time.Second * 5)
 			continue
 		}
 		return

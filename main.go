@@ -29,7 +29,7 @@ func main() {
 
 	redisClient, err := redis.New(ctx)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create docker client")
+		log.Fatal().Err(err).Msg("Failed to create redis client")
 		return
 	}
 	defer redisClient.Close()
