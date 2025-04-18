@@ -3,11 +3,13 @@ module traefik-multi-hosts
 go 1.22.1
 
 require (
-	github.com/docker/docker v25.0.8+incompatible
+	github.com/docker/docker v28.1.1+incompatible
 	github.com/gin-gonic/gin v1.10.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/zerolog v1.34.0
 )
+
+require github.com/moby/docker-image-spec v1.3.1 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
