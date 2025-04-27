@@ -2,54 +2,53 @@ package web
 
 import (
 	"net/http"
+	"text/template"
 	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
-
-	"github.com/gin-gonic/gin"
 )
 
-func getAllHostsWithServices(c *gin.Context, redisClient redis.RedisClient) {
+func getAllHostsWithServices(w http.ResponseWriter, r *http.Request, redisClient redis.RedisClient) {
 	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{
 			"error": err.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, hosts)
+	responseJSON(w, hosts)
 }
 
-func health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"health": "ok",
+func health(w http.ResponseWriter, r *http.Request) {
+	responseJSON(w, UntypedJSON{
+		"status": "ok",
 	})
 }
 
-func serveIndexPage(c *gin.Context, redisClient redis.RedisClient) {
+func serveIndexPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, redisClient redis.RedisClient) {
 	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{
 			"error": err.Error(),
 		})
 		return
 	}
-	c.HTML(http.StatusOK, "index.html", gin.H{
+	tmpl.ExecuteTemplate(w, "index.html", UntypedJSON{
 		"Hosts":       hosts,
 		"CurrentHost": config.HostIP(),
 	})
 }
 
-func freshScan(c *gin.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+func freshScan(w http.ResponseWriter, r *http.Request, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 	err := mhos.FreshScan(dockerClient, redisClient)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{
 			"error": err.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
+	responseJSON(w, UntypedJSON{
 		"status": "ok",
 	})
 }

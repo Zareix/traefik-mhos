@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -28,7 +27,7 @@ func New(ctx context.Context) (*DockerClient, error) {
 	}, nil
 }
 
-func (c *DockerClient) ListContainers() ([]types.Container, error) {
+func (c *DockerClient) ListContainers() ([]container.Summary, error) {
 	filters := filters.NewArgs()
 	filters.Add("status", "running")
 	filters.Add("label", "traefik.enable=true")
@@ -38,11 +37,11 @@ func (c *DockerClient) ListContainers() ([]types.Container, error) {
 	return containers, err
 }
 
-func (c *DockerClient) InspectContainer(containerId string) (types.ContainerJSON, error) {
+func (c *DockerClient) InspectContainer(containerId string) (container.InspectResponse, error) {
 	return c.API.ContainerInspect(c.ctx, containerId)
 }
 
-func (c *DockerClient) Events(options types.EventsOptions) (<-chan events.Message, <-chan error) {
+func (c *DockerClient) Events(options events.ListOptions) (<-chan events.Message, <-chan error) {
 	return c.API.Events(c.ctx, options)
 }
 

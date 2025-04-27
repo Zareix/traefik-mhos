@@ -8,11 +8,11 @@ import (
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/rs/zerolog/log"
 )
 
-func GetFirstExposedPort(container types.ContainerJSON) string {
+func GetFirstExposedPort(container container.InspectResponse) string {
 	for _, port := range container.HostConfig.PortBindings {
 		log.Debug().Str("port", port[0].HostPort).Str("container", container.Name).Msg("Found exposed port")
 		return port[0].HostPort

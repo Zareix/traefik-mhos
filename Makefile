@@ -1,4 +1,4 @@
-.PHONY: live/server live/tailwind build/tailwind build/server dev build
+.PHONY: live/server live/tailwind build/tailwind build/server dev build lint
 
 BINARY_NAME = traefik-mhos
 BUILD_DIR = bin
@@ -31,3 +31,6 @@ dev:
 
 build:
 	$(MAKE) build/tailwind build/server
+
+lint:
+	staticcheck ./...

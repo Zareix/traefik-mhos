@@ -7,7 +7,6 @@ import (
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rs/zerolog/log"
@@ -37,7 +36,7 @@ func listenForContainersEvent(ctx context.Context, dockerClient docker.DockerCli
 	eventsFilters.Add("event", "stop")
 	eventsFilters.Add("event", "start")
 	eventsFilters.Add("label", "traefik.enable=true")
-	containersEventsStream, errors := dockerClient.Events(types.EventsOptions{
+	containersEventsStream, errors := dockerClient.Events(events.ListOptions{
 		Filters: eventsFilters,
 	})
 
