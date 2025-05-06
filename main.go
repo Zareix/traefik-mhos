@@ -13,8 +13,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const Version = "1.0.0"
+
 func main() {
 	ctx := context.Background()
+
+	log.Info().Msgf("Starting traefik-mhos v%s", Version)
 
 	logging.Init()
 	config.Init()
