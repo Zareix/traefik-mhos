@@ -10,6 +10,7 @@ env:
 
 jobs:
   version:
+    name: Get version
     uses: zareix/gh-actions/.github/workflows/get-version.yml@main
     with:
       type: regex
@@ -32,23 +33,13 @@ jobs:
 
   build:
     name: Build executable
-    needs:
-      - version
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: ./.github/actions/build
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: ./bin/traefik-mhos_*
+      - name: Build executable
+        uses: ./.github/actions/build
 
   release:
     name: Create release
@@ -61,4 +52,4 @@ jobs:
     uses: zareix/gh-actions/.github/workflows/release.yml@main
     with:
       tag: ${{ needs.version.outputs.version }}
-      assets: build
+      assets: traefik-mhos_build
