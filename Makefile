@@ -22,12 +22,12 @@ build/tailwind:
 build/server:
 	$(foreach os,$(OS),\
 		$(foreach arch,$(ARCH),\
-			GIN_MODE=release GOOS=$(os) GOARCH=$(arch) go build -o $(BUILD_DIR)/$(BINARY_NAME)_$(os)-$(arch)$(if $(filter windows,$(os)),.exe,);\
+			GOOS=$(os) GOARCH=$(arch) go build -o $(BUILD_DIR)/$(BINARY_NAME)_$(os)-$(arch)$(if $(filter windows,$(os)),.exe,);\
 		)\
 	)
 
 install:
-	bun install
+	bun install && go mod download
 
 dev:
 	$(MAKE) install && $(MAKE) -j2 live/tailwind live/server
