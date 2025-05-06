@@ -1,8 +1,12 @@
-name: 'Docker'
+name: Release
 
 on:
   push:
     branches: ['main']
+
+env:
+  GO_VERSION: 1.24.0
+  BUN_VERSION: 1.2.9
 
 jobs:
   version:
@@ -26,13 +30,35 @@ jobs:
       push-image: true
       platforms: linux/amd64,linux/arm64
 
+  build:
+    name: Build executable
+    needs:
+      - version
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./bin/traefik-mhos_*
+
   release:
     name: Create release
     needs:
       - version
       - docker
+      - build
     permissions:
       contents: write
     uses: zareix/gh-actions/.github/workflows/release.yml@main
     with:
       tag: ${{ needs.version.outputs.version }}
+      assets: build
