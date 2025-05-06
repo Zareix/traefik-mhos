@@ -26,11 +26,14 @@ build/server:
 		)\
 	)
 
+install:
+	bun install
+
 dev:
-	$(MAKE) -j2 live/server live/tailwind
+	$(MAKE) install && $(MAKE) -j2 live/tailwind live/server
 
 build:
-	$(MAKE) build/tailwind build/server
+	$(MAKE) install build/tailwind build/server
 
 lint:
 	staticcheck ./...
