@@ -25,7 +25,7 @@ COPY --from=bun_builder /app/style.css /app/internal/web/static/css/style.css
 RUN go build -o /app/traefik-mhos
 
 
-FROM alpine:3.21 AS runner
+FROM alpine:3.22 AS runner
 
 ENV PORT=8888
 
