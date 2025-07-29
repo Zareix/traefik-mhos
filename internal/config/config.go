@@ -14,6 +14,7 @@ type config struct {
 	redisDB       int
 
 	hostIP string
+	port   string
 
 	logLevel zerolog.Level
 
@@ -30,6 +31,7 @@ func Init() {
 		redisPassword: "",
 		redisDB:       0,
 		hostIP:        "localhost",
+		port:          "8888",
 		logLevel:      zerolog.InfoLevel,
 		listenEvents:  true,
 	}
@@ -55,6 +57,11 @@ func Init() {
 	if hostIP := os.Getenv("HOST_IP"); hostIP != "" {
 		log.Info().Str("HOST_IP", hostIP).Msg("Using HOST_IP env var")
 		appConfig.hostIP = hostIP
+	}
+
+	if port := os.Getenv("PORT"); port != "" {
+		log.Info().Str("PORT", port).Msg("Using PORT env var")
+		appConfig.port = port
 	}
 
 	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
@@ -93,6 +100,10 @@ func RedisDB() int {
 
 func HostIP() string {
 	return appConfig.hostIP
+}
+
+func Port() string {
+	return appConfig.port
 }
 
 func LogLevel() zerolog.Level {

@@ -2,8 +2,10 @@ package web
 
 import (
 	"embed"
+	"fmt"
 	"net/http"
 	"text/template"
+	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 
@@ -33,5 +35,7 @@ func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
 		serveIndexPage(w, r, tmpl, redisClient)
 	})
 
-	http.ListenAndServe(":8888", LoggingMiddleware(router))
+	port := fmt.Sprintf(":%s", config.Port())
+	log.Info().Str("port", port).Msg("Starting web server on port")
+	http.ListenAndServe(port, LoggingMiddleware(router))
 }

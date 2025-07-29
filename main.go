@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
@@ -13,17 +14,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const Version = "1.0.1"
+const Version = "1.1.0"
 
 func main() {
 	ctx := context.Background()
 
 	logging.Init()
-
-	log.Info().Msgf("Starting traefik-mhos v%s", Version)
-
 	config.Init()
 	zerolog.SetGlobalLevel(config.LogLevel())
+
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		mhos.Healthcheck()
+		return
+	}
+
+	log.Info().Msgf("Starting traefik-mhos v%s", Version)
 
 	dockerClient, err := docker.New(ctx)
 	if err != nil {

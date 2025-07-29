@@ -25,12 +25,12 @@ COPY --from=bun_builder /app/style.css /app/internal/web/static/css/style.css
 RUN go build -o /app/traefik-mhos
 
 
-FROM alpine:3.22 AS runner
-
-ENV PORT=8888
+FROM gcr.io/distroless/static-debian12 AS runner
 
 COPY --from=go_builder /app/traefik-mhos /app/traefik-mhos
 
-HEALTHCHECK CMD wget -qO- http://localhost:$PORT/api/health || exit 1
+HEALTHCHECK --interval=30s \
+  --timeout=5s \
+  CMD ["/app/traefik-mhos", "healthcheck"]
 
 CMD ["/app/traefik-mhos"]
