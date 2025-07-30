@@ -1,30 +1,15 @@
 package mhos
 
 import (
-	"context"
-	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
-	"traefik-multi-hosts/internal/listeners"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/traefik"
 
 	"github.com/rs/zerolog/log"
 )
 
-func Run(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
-	log.Info().Msg("Starting traefik-mhos")
-
-	FreshScan(dockerClient, redisClient)
-
-	if config.ListenEvents() {
-		listeners.ListenForContainersEvent(ctx, dockerClient, redisClient)
-	}
-}
-
-func FreshScan(dockerClient docker.DockerClient, redisClient redis.RedisClient) error {
-	log.Info().Msg("Running first start with existing containers")
-
-	redisClient.CleanCurrentServices()
+func FreshScan(dockerClient *docker.DockerClient, redisClient *redis.RedisClient) error {
+	log.Info().Msg("Running scan with existing containers")
 
 	containers, err := dockerClient.ListContainers()
 	if err != nil {

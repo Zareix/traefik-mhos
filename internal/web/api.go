@@ -18,7 +18,7 @@ var templateFS embed.FS
 //go:embed static/*
 var staticFS embed.FS
 
-func Serve(dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+func Serve(dockerClient *docker.DockerClient, redisClient *redis.RedisClient) {
 	log.Info().Msg("Starting web server")
 	tmpl, _ := template.New("").ParseFS(templateFS, "templates/*.html")
 	router := http.NewServeMux()

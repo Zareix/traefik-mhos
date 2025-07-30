@@ -1,9 +1,9 @@
 {
   "name": "traefik-multi-hosts",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.4",
+    "@tailwindcss/cli": "^4.1.11",
     "@types/bun": "latest",
-    "tailwindcss": "^4.1.4"
+    "tailwindcss": "^4.1.11"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"

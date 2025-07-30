@@ -28,33 +28,50 @@
 </head>
 
 <body>
-  <h1 class="mt-8 mb-2 text-center text-4xl font-bold">Traefik-MHOS</h1>
-  <main class="max-w-3xl mx-auto pb-24">
-    <h2 class="mt-8 text-2xl font-bold">Hosts</h2>
+  <main class="max-w-3xl mx-auto pb-24 pt-8">
+    <section class="flex items-center">
+      <h1 class="mb-2 text-center text-4xl font-bold">Traefik-MHOS</h1>
+      <div class="grid grid-cols-2 gap-4 ml-auto">
+        <div class="flex flex-col text-center">
+          <div class="text-2xl">{{ len .Hosts }}</div>
+          <p class="font-medium">Hosts</p>
+        </div>
+        <div class="flex flex-col text-center">
+          <div class="text-2xl">{{ .TotalServices }}</div>
+          <p class="font-medium">Services</p>
+        </div>
+      </div>
+    </section>
+    <hr class="my-4 opacity-10">
     <ul>
       {{ range $host, $services := .Hosts }}
       <li x-data="">
         <h3 class="mt-4 flex items-center gap-2 text-xl font-bold">
           {{ $host }}
           {{ if eq $host $.CurrentHost }}
-          <span class="italic font-normal">- Current</span>
-          <button class="ml-auto bg-green-500 font-medium text-white cursor-pointer px-2 py-1 text-base"
+          <span class="italic font-normal opacity-50">Current</span>
+          <button
+            class="ml-auto bg-green-500 hover:bg-green-600 font-medium transition-colors rounded-sm text-gray-50 cursor-pointer px-2 py-1 text-base"
             @click="freshScan($el)">
             Fresh-scan
           </button>
           {{ end }}
         </h3>
-        <ul class="list-none p-0 mt-4" x-data="{ openedTab: '' }">
+        <ul class="list-none p-0 mt-2" x-data="{ openedTab: '' }">
           {{ range $services }}
-          <li class="my-0 not-first:border-t border-gray-300" x-data="{ name: '{{ .Name }}' }">
+          <li class="my-0 group not-first:border-t border-gray-300" x-data="{ name: '{{ .Name }}' }">
             <button
-              class="bg-slate-200 py-4 text-slate-900 cursor-pointer px-4 w-full text-left border-none outline-none"
-              :class="open ? '!bg-slate-100' : ''" @click="openedTab = (openedTab === name ? '' : name)" x-text="name">
+              class="bg-slate-200 py-4 text-slate-900 cursor-pointer px-4 w-full text-left border-none outline-none group-first:rounded-t-sm"
+              :class="(openedTab === name) ? '!bg-slate-100' : 'group-last:rounded-b-sm'"
+              @click="openedTab = (openedTab === name ? '' : name)" x-text="name">
             </button>
-            <ul class="ml-2 py-0 px-4 overflow-hidden bg-white transition-[max-height]" x-show="openedTab === name"
-              x-collapse>
+            <ul
+              class="px-4 overflow-hidden bg-white transition-[max-height] border-x group-last:border-b group-last:rounded-b-sm border-gray-300 list-disc"
+              x-show="openedTab === name" x-collapse>
               {{ range $key, $value := .Labels }}
-              <li><strong>{{ $key }}</strong>: {{ $value }}</li>
+              <li class="first:pt-2 last:pb-2 ml-2">
+                <strong>{{ $key }}</strong>: {{ $value }}
+              </li>
               {{ end }}
             </ul>
           </li>

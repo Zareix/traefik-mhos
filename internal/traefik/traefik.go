@@ -20,7 +20,7 @@ func GetFirstExposedPort(container container.InspectResponse) string {
 	return ""
 }
 
-func AddContainerToTraefik(dockerClient docker.DockerClient, redisClient redis.RedisClient, containerId string) error {
+func AddContainerToTraefik(dockerClient *docker.DockerClient, redisClient *redis.RedisClient, containerId string) error {
 	container, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
@@ -31,7 +31,7 @@ func AddContainerToTraefik(dockerClient docker.DockerClient, redisClient redis.R
 
 	kv := make(map[string]string)
 	var serviceName string
-	servicePort := GetFirstExposedPort(container)
+	var servicePort string
 	var routerRule string
 	for labelKey, labelValue := range container.Config.Labels {
 		if !strings.HasPrefix(labelKey, "traefik.http.services") && !strings.HasPrefix(labelKey, "traefik.http.routers") && !strings.HasPrefix(labelKey, "traefik.tcp.routers") {
@@ -65,9 +65,12 @@ func AddContainerToTraefik(dockerClient docker.DockerClient, redisClient redis.R
 	}
 
 	if servicePort == "" {
-		err := errors.New("Service has no port: " + serviceName)
-		log.Error().Str("serviceName", serviceName).Msg("Service has no port")
-		return err
+		servicePort = GetFirstExposedPort(container)
+		if servicePort == "" {
+			err := errors.New("Service has no port: " + serviceName)
+			log.Error().Str("serviceName", serviceName).Msg("Service has no port")
+			return err
+		}
 	}
 
 	log.Debug().Str("serviceName", serviceName).Str("servicePort", servicePort).Msg("Adding service to traefik")
@@ -79,7 +82,7 @@ func AddContainerToTraefik(dockerClient docker.DockerClient, redisClient redis.R
 	return nil
 }
 
-func RemoveContainerFromTraefik(dockerClient docker.DockerClient, redisClient redis.RedisClient, containerId string) {
+func RemoveContainerFromTraefik(dockerClient *docker.DockerClient, redisClient *redis.RedisClient, containerId string) {
 	container, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")

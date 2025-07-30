@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+func ListenForContainersEvent(ctx context.Context, dockerClient *docker.DockerClient, redisClient *redis.RedisClient) {
 	retries := 0
 	for {
 		err := listenForContainersEvent(ctx, dockerClient, redisClient)
@@ -30,7 +30,7 @@ func ListenForContainersEvent(ctx context.Context, dockerClient docker.DockerCli
 	}
 }
 
-func listenForContainersEvent(ctx context.Context, dockerClient docker.DockerClient, redisClient redis.RedisClient) error {
+func listenForContainersEvent(ctx context.Context, dockerClient *docker.DockerClient, redisClient *redis.RedisClient) error {
 	eventsFilters := filters.NewArgs()
 	eventsFilters.Add("type", "container")
 	eventsFilters.Add("event", "stop")

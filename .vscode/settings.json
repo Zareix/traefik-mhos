@@ -1,5 +1,6 @@
 {
   "yaml.schemas": {
     "https://json.schemastore.org/github-action.json": "file:///Users/raphaelgc/Developer/PROJECTS/traefik-multi-hosts/.github/actions/build.yml"
-  }
+  },
+  "evenBetterToml.schema.enabled": false
 }

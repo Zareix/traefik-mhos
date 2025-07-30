@@ -9,7 +9,7 @@ import (
 	"traefik-multi-hosts/internal/redis"
 )
 
-func getAllHostsWithServices(w http.ResponseWriter, r *http.Request, redisClient redis.RedisClient) {
+func getAllHostsWithServices(w http.ResponseWriter, r *http.Request, redisClient *redis.RedisClient) {
 	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
 		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{
@@ -26,7 +26,7 @@ func health(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func serveIndexPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, redisClient redis.RedisClient) {
+func serveIndexPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, redisClient *redis.RedisClient) {
 	hosts, err := redisClient.GetAllHostsWithServices()
 	if err != nil {
 		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{
@@ -34,13 +34,18 @@ func serveIndexPage(w http.ResponseWriter, r *http.Request, tmpl *template.Templ
 		})
 		return
 	}
+	totalServices := 0
+	for _, services := range hosts {
+		totalServices += len(services)
+	}
 	tmpl.ExecuteTemplate(w, "index.html", UntypedJSON{
-		"Hosts":       hosts,
-		"CurrentHost": config.HostIP(),
+		"Hosts":         hosts,
+		"CurrentHost":   config.HostIP(),
+		"TotalServices": totalServices,
 	})
 }
 
-func freshScan(w http.ResponseWriter, r *http.Request, dockerClient docker.DockerClient, redisClient redis.RedisClient) {
+func freshScan(w http.ResponseWriter, r *http.Request, dockerClient *docker.DockerClient, redisClient *redis.RedisClient) {
 	err := mhos.FreshScan(dockerClient, redisClient)
 	if err != nil {
 		responseJSONWithStatus(w, http.StatusInternalServerError, UntypedJSON{

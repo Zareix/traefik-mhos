@@ -54,17 +54,15 @@ func (r *RedisClient) SaveService(serviceName string, kv map[string]string) {
 func (r *RedisClient) RemoveService(serviceName string) {
 	r.API.ZRem(r.ctx, "mhos:"+config.HostIP(), serviceName)
 
-	keys, err := r.API.Keys(r.ctx, "*").Result() // TODO: use scan
+	keys, err := r.scanKeys(fmt.Sprintf("*/%s/*", serviceName))
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get all redis stored keys")
+		log.Error().Err(err).Msg("Failed to scan redis keys for service removal")
 		return
 	}
 
 	for _, key := range keys {
-		if strings.Contains(key, fmt.Sprintf("/%s/", serviceName)) {
-			log.Debug().Str("key", key).Msg("Removing key")
-			r.API.Del(r.ctx, key)
-		}
+		log.Debug().Str("key", key).Msg("Removing key")
+		r.API.Del(r.ctx, key)
 	}
 }
 
@@ -79,9 +77,9 @@ func contains(slice []string, item string) bool {
 
 func (r *RedisClient) Cleanup() {
 	var current []string
-	hosts, err := r.API.Keys(r.ctx, "mhos:*").Result() // TODO: use scan
+	hosts, err := r.scanKeys("mhos:*")
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get all redis mhos:* stored keys")
+		log.Error().Err(err).Msg("Failed to scan redis 'mhos:*' keys")
 		return
 	}
 	for _, key := range hosts {
@@ -95,9 +93,9 @@ func (r *RedisClient) Cleanup() {
 
 	log.Info().Strs("services", current).Msg("Current services")
 
-	keys, err := r.API.Keys(r.ctx, "*").Result() // TODO: use scan
+	keys, err := r.scanKeys("*")
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get all redis stored keys")
+		log.Error().Err(err).Msg("Failed to scan all redis keys")
 		return
 	}
 
@@ -173,20 +171,24 @@ func filterLabelsOfService(allLabels map[string]string, serviceName string) map[
 }
 
 func (r *RedisClient) scanKeys(pattern string) ([]string, error) {
-	var allKeys []string
+	const batchSize = 1000
+	allKeys := make([]string, 0, 1000)
 	var cursor uint64
+
 	for {
-		var err error
-		var keys []string
-		keys, cursor, err = r.API.Scan(r.ctx, cursor, pattern, 500).Result()
+		keys, nextCursor, err := r.API.Scan(r.ctx, cursor, pattern, batchSize).Result()
 		if err != nil {
-			log.Error().Err(err).Str("pattern", pattern).Msg("Failed to get all scan for pattenr")
+			log.Error().Err(err).Str("pattern", pattern).Msg("Failed to scan keys with pattern")
 			return nil, err
 		}
+
 		allKeys = append(allKeys, keys...)
+		cursor = nextCursor
+
 		if cursor == 0 {
 			break
 		}
 	}
+
 	return allKeys, nil
 }

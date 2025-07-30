@@ -33,3 +33,5 @@ test.sh
 
 node_modules/
 internal/web/static/css/style.css
+
+tmp

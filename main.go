@@ -6,6 +6,7 @@ import (
 	"traefik-multi-hosts/cmd/mhos"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
+	"traefik-multi-hosts/internal/listeners"
 	"traefik-multi-hosts/internal/logging"
 	"traefik-multi-hosts/internal/redis"
 	"traefik-multi-hosts/internal/web"
@@ -14,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const Version = "1.1.0"
+const Version = "1.2.0"
 
 func main() {
 	ctx := context.Background()
@@ -43,13 +44,18 @@ func main() {
 		return
 	}
 	defer redisClient.Close()
+	log.Info().Msg("Starting traefik-mhos")
 
-	go func() {
-		web.Serve(*dockerClient, *redisClient)
-	}()
-	go func() {
-		mhos.Run(ctx, *dockerClient, *redisClient)
-	}()
+	redisClient.CleanCurrentServices()
+	mhos.FreshScan(dockerClient, redisClient)
+	if config.ListenEvents() {
+		go func() {
+			listeners.ListenForContainersEvent(ctx, dockerClient, redisClient)
+		}()
+		go func() {
+			web.Serve(dockerClient, redisClient)
+		}()
+		select {}
+	}
 
-	select {}
 }

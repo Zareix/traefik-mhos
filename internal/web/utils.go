@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type UntypedJSON map[string]interface{}
+type UntypedJSON map[string]any
 
 func responseJSON(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json")

@@ -1,9 +1,17 @@
-.PHONY: live/server live/tailwind build/tailwind build/server dev build lint
+.PHONY: run live/server live/tailwind build/tailwind build/server dev build lint
 
 BINARY_NAME = traefik-mhos
 BUILD_DIR = bin
 OS = linux darwin windows
 ARCH = amd64 arm64
+
+run:
+	REDIS_DB=0 \
+	REDIS_PASSWORD=password \
+	LOG_LEVEL=debug \
+	PORT=8888 \
+	LISTEN_EVENTS=false \
+	go run .
 
 live/server:
 	REDIS_DB=0 \
@@ -11,7 +19,7 @@ live/server:
 	LOG_LEVEL=debug \
 	PORT=8888 \
 	LISTEN_EVENTS=true \
-	gow -e=go,mod,html run .
+	air
 
 live/tailwind:
 	bun run --bun tailwindcss -i internal/web/static/css/input.css -o internal/web/static/css/style.css --watch
