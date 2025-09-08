@@ -6,7 +6,7 @@ toolchain go1.25.1
 
 require (
 	github.com/docker/docker v28.4.0+incompatible
-	github.com/redis/go-redis/v9 v9.12.1
+	github.com/redis/go-redis/v9 v9.13.0
 	github.com/rs/zerolog v1.34.0
 )
 
