@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func FreshScan(dockerClient *docker.DockerClient, redisClient *redis.RedisClient) error {
+func FreshScan(dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) error {
 	log.Info().Msg("Running scan with existing containers")
 
 	containers, err := dockerClient.ListContainers()

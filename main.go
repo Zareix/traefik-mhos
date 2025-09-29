@@ -47,7 +47,11 @@ func main() {
 	log.Info().Msg("Starting traefik-mhos")
 
 	redisClient.CleanCurrentServices()
-	mhos.FreshScan(dockerClient, redisClient)
+	err = mhos.FreshScan(dockerClient, redisClient)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to perform initial fresh scan")
+		return
+	}
 	if config.ListenEvents() {
 		go func() {
 			listeners.ListenForContainersEvent(ctx, dockerClient, redisClient)

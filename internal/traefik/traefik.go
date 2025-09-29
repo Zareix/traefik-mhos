@@ -20,20 +20,20 @@ func GetFirstExposedPort(container container.InspectResponse) string {
 	return ""
 }
 
-func AddContainerToTraefik(dockerClient *docker.DockerClient, redisClient *redis.RedisClient, containerId string) error {
-	container, err := dockerClient.InspectContainer(containerId)
+func AddContainerToTraefik(dockerClient docker.Client, redisClient redis.Client, containerId string) error {
+	inspectResponse, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
-		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
+		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect inspectResponse")
 		return err
 	}
 
-	log.Debug().Str("id", containerId).Str("name", container.Name).Msg("Adding container to traefik")
+	log.Debug().Str("id", containerId).Str("name", inspectResponse.Name).Msg("Adding inspectResponse to traefik")
 
 	kv := make(map[string]string)
 	var serviceName string
 	var servicePort string
 	var routerRule string
-	for labelKey, labelValue := range container.Config.Labels {
+	for labelKey, labelValue := range inspectResponse.Config.Labels {
 		if !strings.HasPrefix(labelKey, "traefik.http.services") && !strings.HasPrefix(labelKey, "traefik.http.routers") && !strings.HasPrefix(labelKey, "traefik.tcp.routers") {
 			continue
 		} else if serviceName == "" {
@@ -65,7 +65,7 @@ func AddContainerToTraefik(dockerClient *docker.DockerClient, redisClient *redis
 	}
 
 	if servicePort == "" {
-		servicePort = GetFirstExposedPort(container)
+		servicePort = GetFirstExposedPort(inspectResponse)
 		if servicePort == "" {
 			err := errors.New("Service has no port: " + serviceName)
 			log.Error().Str("serviceName", serviceName).Msg("Service has no port")
@@ -82,14 +82,14 @@ func AddContainerToTraefik(dockerClient *docker.DockerClient, redisClient *redis
 	return nil
 }
 
-func RemoveContainerFromTraefik(dockerClient *docker.DockerClient, redisClient *redis.RedisClient, containerId string) {
-	container, err := dockerClient.InspectContainer(containerId)
+func RemoveContainerFromTraefik(dockerClient docker.Client, redisClient redis.Client, containerId string) {
+	inspectResponse, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
-		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect container")
+		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect inspectResponse")
 	}
 
 	var serviceName string
-	for labelKey := range container.Config.Labels {
+	for labelKey := range inspectResponse.Config.Labels {
 		if strings.HasPrefix(labelKey, "traefik.http.routers.") && strings.HasSuffix(labelKey, ".rule") {
 			serviceName = strings.Split(labelKey, ".")[3]
 			break

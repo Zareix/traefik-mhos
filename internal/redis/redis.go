@@ -10,7 +10,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type RedisClient struct {
+// Interface pour permettre le mock
+type Client interface {
+	SaveService(serviceName string, kv map[string]string)
+	RemoveService(serviceName string)
+	// Ajouter d'autres méthodes si besoin pour les tests
+}
+
+type ClientImpl struct {
 	ctx context.Context
 	API *redis.Client
 }
@@ -20,7 +27,7 @@ type Service struct {
 	Labels map[string]string `json:"labels"`
 }
 
-func New(ctx context.Context) (*RedisClient, error) {
+func New(ctx context.Context) (*ClientImpl, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.RedisAddress(),
 		Password: config.RedisPassword(),
@@ -32,14 +39,14 @@ func New(ctx context.Context) (*RedisClient, error) {
 		log.Fatal().Err(err).Msg("Failed to connect to redis")
 	}
 
-	redisClient := &RedisClient{ctx, client}
+	redisClient := &ClientImpl{ctx, client}
 
 	redisClient.CleanCurrentServices()
 
 	return redisClient, nil
 }
 
-func (r *RedisClient) SaveService(serviceName string, kv map[string]string) {
+func (r *ClientImpl) SaveService(serviceName string, kv map[string]string) {
 	for key, value := range kv {
 		log.Debug().Str("key", key).Str("value", value).Msg("Saving key-value pair")
 		r.API.Set(r.ctx, key, value, 0)
@@ -51,7 +58,7 @@ func (r *RedisClient) SaveService(serviceName string, kv map[string]string) {
 	})
 }
 
-func (r *RedisClient) RemoveService(serviceName string) {
+func (r *ClientImpl) RemoveService(serviceName string) {
 	r.API.ZRem(r.ctx, "mhos:"+config.HostIP(), serviceName)
 
 	keys, err := r.scanKeys(fmt.Sprintf("*/%s/*", serviceName))
@@ -75,7 +82,7 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func (r *RedisClient) Cleanup() {
+func (r *ClientImpl) Cleanup() {
 	var current []string
 	hosts, err := r.scanKeys("mhos:*")
 	if err != nil {
@@ -106,7 +113,7 @@ func (r *RedisClient) Cleanup() {
 	}
 }
 
-func (r *RedisClient) GetAllHostsWithServices() (map[string][]Service, error) {
+func (r *ClientImpl) GetAllHostsWithServices() (map[string][]Service, error) {
 	hosts := make(map[string][]Service)
 	hostsKeys, err := r.scanKeys("mhos:*")
 	if err != nil {
@@ -133,17 +140,17 @@ func (r *RedisClient) GetAllHostsWithServices() (map[string][]Service, error) {
 	return hosts, nil
 }
 
-func (r *RedisClient) CleanCurrentServices() {
+func (r *ClientImpl) CleanCurrentServices() {
 	r.API.Del(r.ctx, "mhos:"+config.HostIP())
 }
 
-func (r *RedisClient) Close() {
+func (r *ClientImpl) Close() {
 	if r.API != nil {
 		_ = r.API.Close()
 	}
 }
 
-func (r *RedisClient) getAllLabels() (map[string]string, error) {
+func (r *ClientImpl) getAllLabels() (map[string]string, error) {
 	keys, err := r.scanKeys("traefik/*")
 	if err != nil {
 		return nil, err
@@ -170,7 +177,7 @@ func filterLabelsOfService(allLabels map[string]string, serviceName string) map[
 	return serviceLabels
 }
 
-func (r *RedisClient) scanKeys(pattern string) ([]string, error) {
+func (r *ClientImpl) scanKeys(pattern string) ([]string, error) {
 	const batchSize = 1000
 	allKeys := make([]string, 0, 1000)
 	var cursor uint64

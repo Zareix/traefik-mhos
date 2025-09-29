@@ -10,42 +10,46 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type DockerClient struct {
+type Client interface {
+	InspectContainer(containerId string) (container.InspectResponse, error)
+}
+
+type ClientImpl struct {
 	ctx context.Context
 	API *client.Client
 }
 
-func New(ctx context.Context) (*DockerClient, error) {
-	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+func New(ctx context.Context) (*ClientImpl, error) {
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create docker client")
+		log.Fatal().Err(err).Msg("Failed to create docker dockerClient")
 		return nil, err
 	}
-	return &DockerClient{
+	return &ClientImpl{
 		ctx: ctx,
-		API: client,
+		API: dockerClient,
 	}, nil
 }
 
-func (c *DockerClient) ListContainers() ([]container.Summary, error) {
-	filters := filters.NewArgs()
-	filters.Add("status", "running")
-	filters.Add("label", "traefik.enable=true")
+func (c *ClientImpl) ListContainers() ([]container.Summary, error) {
+	filtersArgs := filters.NewArgs()
+	filtersArgs.Add("status", "running")
+	filtersArgs.Add("label", "traefik.enable=true")
 	containers, err := c.API.ContainerList(c.ctx, container.ListOptions{
-		Filters: filters,
+		Filters: filtersArgs,
 	})
 	return containers, err
 }
 
-func (c *DockerClient) InspectContainer(containerId string) (container.InspectResponse, error) {
+func (c *ClientImpl) InspectContainer(containerId string) (container.InspectResponse, error) {
 	return c.API.ContainerInspect(c.ctx, containerId)
 }
 
-func (c *DockerClient) Events(options events.ListOptions) (<-chan events.Message, <-chan error) {
+func (c *ClientImpl) Events(options events.ListOptions) (<-chan events.Message, <-chan error) {
 	return c.API.Events(c.ctx, options)
 }
 
-func (c *DockerClient) Close() {
+func (c *ClientImpl) Close() {
 	if c.API != nil {
 		_ = c.API.Close()
 	}

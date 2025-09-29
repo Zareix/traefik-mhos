@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ListenForContainersEvent(ctx context.Context, dockerClient *docker.DockerClient, redisClient *redis.RedisClient) {
+func ListenForContainersEvent(ctx context.Context, dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) {
 	retries := 0
 	for {
 		err := listenForContainersEvent(ctx, dockerClient, redisClient)
@@ -30,7 +30,7 @@ func ListenForContainersEvent(ctx context.Context, dockerClient *docker.DockerCl
 	}
 }
 
-func listenForContainersEvent(ctx context.Context, dockerClient *docker.DockerClient, redisClient *redis.RedisClient) error {
+func listenForContainersEvent(ctx context.Context, dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) error {
 	eventsFilters := filters.NewArgs()
 	eventsFilters.Add("type", "container")
 	eventsFilters.Add("event", "stop")
@@ -48,7 +48,7 @@ func listenForContainersEvent(ctx context.Context, dockerClient *docker.DockerCl
 			switch event.Action {
 			case events.ActionStart:
 				log.Debug().Str("containerId", event.Actor.ID).Msg("Container started")
-				traefik.AddContainerToTraefik(dockerClient, redisClient, event.Actor.ID)
+				_ = traefik.AddContainerToTraefik(dockerClient, redisClient, event.Actor.ID)
 			case events.ActionStop:
 				log.Debug().Str("containerId", event.Actor.ID).Msg("Container stopped")
 				traefik.RemoveContainerFromTraefik(dockerClient, redisClient, event.Actor.ID)
