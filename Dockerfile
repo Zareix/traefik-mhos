@@ -1,4 +1,4 @@
-FROM oven/bun:1.2.19 AS bun_builder
+FROM oven/bun:1.2.23 AS bun_builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY internal/web/static/css/input.css internal/web/templates/ ./
 RUN bun run --bun tailwindcss -i input.css -o style.css --minify
 
 
-FROM golang:1.24.5-alpine3.21 AS go_builder
+FROM golang:1.25.1-alpine3.21 AS go_builder
 
 WORKDIR /app
 

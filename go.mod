@@ -2,11 +2,11 @@ module traefik-multi-hosts
 
 go 1.23.0
 
-toolchain go1.24.5
+toolchain go1.25.1
 
 require (
-	github.com/docker/docker v28.3.3+incompatible
-	github.com/redis/go-redis/v9 v9.11.0
+	github.com/docker/docker v28.4.0+incompatible
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/rs/zerolog v1.34.0
 )
 
