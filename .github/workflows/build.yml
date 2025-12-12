@@ -31,7 +31,7 @@ jobs:
         run: make build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: github.event_name != 'pull_request'
         with:
           name: traefik-mhos_build
