@@ -70,8 +70,6 @@ services:
       - DOCKER_HOSTS=tcp://X.X.X.X:2375,tcp://Y.Y.Y.Y:2376
 ```
 
-If you still want to use "pull" mode with local docker socket, just set `DOCKER_HOSTS` to `unix:///var/run/docker.sock`.
-
 ## Environment Variables
 
 | Name           | Description                                                   | Default                                                  |
