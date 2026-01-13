@@ -19,7 +19,7 @@ func FreshScan(dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) e
 	log.Debug().Int("containers", len(containers)).Msg("Found running containers")
 
 	for _, container := range containers {
-		err := traefik.AddContainerToTraefik(dockerClient, redisClient, container.ID)
+		err := traefik.AddContainerToTraefik(*dockerClient, redisClient, container.ID)
 		if err != nil {
 			log.Error().Err(err).Str("container", container.ID).Msg("Failed to add container to traefik")
 			return err

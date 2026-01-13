@@ -12,8 +12,8 @@ import (
 
 // Interface pour permettre le mock
 type Client interface {
-	SaveService(serviceName string, kv map[string]string)
-	RemoveService(serviceName string)
+	SaveService(serviceName, hostIp string, kv map[string]string)
+	RemoveService(serviceName, hostIp string)
 	// Ajouter d'autres méthodes si besoin pour les tests
 }
 
@@ -41,25 +41,23 @@ func New(ctx context.Context) (*ClientImpl, error) {
 
 	redisClient := &ClientImpl{ctx, client}
 
-	redisClient.CleanCurrentServices()
-
 	return redisClient, nil
 }
 
-func (r *ClientImpl) SaveService(serviceName string, kv map[string]string) {
+func (r *ClientImpl) SaveService(serviceName, hostIp string, kv map[string]string) {
 	for key, value := range kv {
 		log.Debug().Str("key", key).Str("value", value).Msg("Saving key-value pair")
 		r.API.Set(r.ctx, key, value, 0)
 	}
 
-	r.API.ZAdd(r.ctx, "mhos:"+config.HostIP(), redis.Z{
+	r.API.ZAdd(r.ctx, "mhos:"+hostIp, redis.Z{
 		Score:  0,
 		Member: serviceName,
 	})
 }
 
-func (r *ClientImpl) RemoveService(serviceName string) {
-	r.API.ZRem(r.ctx, "mhos:"+config.HostIP(), serviceName)
+func (r *ClientImpl) RemoveService(serviceName, hostIp string) {
+	r.API.ZRem(r.ctx, "mhos:"+hostIp, serviceName)
 
 	keys, err := r.scanKeys(fmt.Sprintf("*/%s/*", serviceName))
 	if err != nil {
@@ -140,8 +138,12 @@ func (r *ClientImpl) GetAllHostsWithServices() (map[string][]Service, error) {
 	return hosts, nil
 }
 
-func (r *ClientImpl) CleanCurrentServices() {
-	r.API.Del(r.ctx, "mhos:"+config.HostIP())
+func (r *ClientImpl) CleanAllServices() {
+	r.API.FlushDB(r.ctx)
+}
+
+func (r *ClientImpl) CleanCurrentServices(hostIp string) {
+	r.API.Del(r.ctx, "mhos:"+hostIp)
 }
 
 func (r *ClientImpl) Close() {

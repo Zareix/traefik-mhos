@@ -20,7 +20,7 @@ services:
     image: redis:latest
     command: redis-server --requirepass password
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - ./redis_data:/data
 
@@ -30,8 +30,8 @@ services:
       - --providers.redis.endpoints=db:6379
       - --providers.redis.password=password
     ports:
-      - '80:80'
-      - '443:443'
+      - "80:80"
+      - "443:443"
 ```
 
 | You can also add it through Traefik static configuration.
@@ -51,6 +51,27 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+---
+
+traefik-mhos can also work in "pull" mode, where it runs on the same host as traefik and connect to multiple docker hosts through their docker API (exposed with something like [docker-socket-proxy](https://github.com/11notes/docker-socket-proxy)).
+
+To use this, just set the `DOCKER_HOSTS` environment variable to point to the remote docker host (for example: `tcp://X.X.X.X.2375,tcp://Y.Y.Y.Y:2376`).
+
+`HOST_IP` is not needed in this mode and is determined automatically from the docker host connection.
+
+```yaml
+services:
+  traefik-mhos:
+    image: ghcr.io/zareix/traefik-mhos
+    environment:
+      - REDIS_ADDRESS=${REDIS_ADDRESS}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_DB}
+      - DOCKER_HOSTS=tcp://X.X.X.X:2375,tcp://Y.Y.Y.Y:2376
+```
+
+If you still want to use "pull" mode with local docker socket, just set `DOCKER_HOSTS` to `unix:///var/run/docker.sock`.
+
 ## Environment Variables
 
 | Name           | Description                                                   | Default                                                  |
@@ -59,6 +80,7 @@ services:
 | REDIS_PASSWORD | The Redis db password                                         | `<empty string>`                                         |
 | REDIS_DB       | The Redis db name                                             | `0`                                                      |
 | HOST_IP        | The current host IP (where the traefik routers will point to) | `localhost` (but you should change it to an IP/hostname) |
+| DOCKER_HOSTS   | Comma-separated list of docker hosts to connect to            | `<empty string>` (use local docker socket)               |
 | LOG_LEVEL      | Minimum log level (debug, info, warn, error, fatal)           | `info`                                                   |
 | LISTEN_EVENTS  | Listen to docker events                                       | `true`                                                   |
 

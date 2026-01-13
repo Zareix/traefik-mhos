@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const Version = "1.2.1"
+const Version = "1.3.0"
 
 func main() {
 	ctx := context.Background()
@@ -31,13 +31,6 @@ func main() {
 
 	log.Info().Msgf("Starting traefik-mhos v%s", Version)
 
-	dockerClient, err := docker.New(ctx)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create docker client")
-		return
-	}
-	defer dockerClient.Close()
-
 	redisClient, err := redis.New(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create redis client")
@@ -46,20 +39,40 @@ func main() {
 	defer redisClient.Close()
 	log.Info().Msg("Starting traefik-mhos")
 
-	redisClient.CleanCurrentServices()
-	err = mhos.FreshScan(dockerClient, redisClient)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to perform initial fresh scan")
-		return
-	}
-	if config.ListenEvents() {
-		go func() {
-			listeners.ListenForContainersEvent(ctx, dockerClient, redisClient)
-		}()
-		go func() {
-			web.Serve(dockerClient, redisClient)
-		}()
+	if len(config.DockerHosts()) > 0 {
+		log.Info().Msgf("Monitoring docker hosts: %v", config.DockerHosts())
+
+		if config.Mode() == config.PullMode {
+			log.Info().Msg("Operating in PULL mode")
+			redisClient.CleanAllServices()
+		} else {
+			log.Info().Msg("Operating in PUSH mode")
+		}
+
+		for _, host := range config.DockerHosts() {
+			go func(host string) {
+				dockerClient, err := docker.New(ctx, host)
+				if err != nil {
+					log.Fatal().Err(err).Msg("Failed to create docker client")
+					return
+				}
+				defer dockerClient.Close()
+				redisClient.CleanCurrentServices(config.HostIP())
+				err = mhos.FreshScan(dockerClient, redisClient)
+				if config.ListenEvents() {
+					listeners.ListenForContainersEvent(ctx, dockerClient, redisClient)
+				}
+			}(host)
+		}
+		// TODO web server
+		if config.ListenEvents() {
+			go func() {
+				web.Serve(redisClient)
+			}()
+		}
 		select {}
+	} else {
+		log.Warn().Msg("No docker hosts configured, exiting")
 	}
 
 }

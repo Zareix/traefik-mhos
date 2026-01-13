@@ -3,9 +3,17 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+)
+
+type ModeType string
+
+const (
+	PullMode ModeType = "pull"
+	PushMode ModeType = "push"
 )
 
 type config struct {
@@ -13,8 +21,10 @@ type config struct {
 	redisPassword string
 	redisDB       int
 
-	hostIP string
-	port   string
+	mode        ModeType
+	dockerHosts []string
+	hostIP      string
+	port        string
 
 	logLevel zerolog.Level
 
@@ -30,6 +40,7 @@ func Init() {
 		redisAddress:  "localhost:6379",
 		redisPassword: "",
 		redisDB:       0,
+		dockerHosts:   []string{"unix:///var/run/docker.sock"},
 		hostIP:        "localhost",
 		port:          "8888",
 		logLevel:      zerolog.InfoLevel,
@@ -52,6 +63,12 @@ func Init() {
 			log.Info().Int("REDIS_DB", db).Msg("Using REDIS_DB env var")
 			appConfig.redisDB = db
 		}
+	}
+
+	if dockerHosts := os.Getenv("DOCKER_HOSTS"); dockerHosts != "" {
+		log.Info().Str("DOCKER_HOSTS", dockerHosts).Msg("Using DOCKER_HOSTS env var")
+		appConfig.dockerHosts = strings.Split(dockerHosts, ",")
+		appConfig.mode = PullMode
 	}
 
 	if hostIP := os.Getenv("HOST_IP"); hostIP != "" {
@@ -96,6 +113,14 @@ func RedisPassword() string {
 
 func RedisDB() int {
 	return appConfig.redisDB
+}
+
+func Mode() ModeType {
+	return appConfig.mode
+}
+
+func DockerHosts() []string {
+	return appConfig.dockerHosts
 }
 
 func HostIP() string {

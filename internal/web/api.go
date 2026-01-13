@@ -4,6 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"text/template"
 	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
@@ -18,7 +20,7 @@ var templateFS embed.FS
 //go:embed static/*
 var staticFS embed.FS
 
-func Serve(dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) {
+func Serve(redisClient *redis.ClientImpl) {
 	log.Info().Msg("Starting web server")
 	tmpl, _ := template.New("").ParseFS(templateFS, "templates/*.html")
 	router := http.NewServeMux()
@@ -30,6 +32,24 @@ func Serve(dockerClient *docker.ClientImpl, redisClient *redis.ClientImpl) {
 		getAllHostsWithServices(w, redisClient)
 	})
 	router.HandleFunc("POST /api/scan", func(w http.ResponseWriter, r *http.Request) {
+		host := r.FormValue("host")
+		var dockerHost string
+		for _, h := range config.DockerHosts() {
+			parsedUrl, err := url.Parse(dockerHost)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid docker host URL: %v", err), http.StatusBadRequest)
+				return
+			}
+			if host == strings.TrimSpace(parsedUrl.Host) {
+				dockerHost = h
+				break
+			}
+		}
+		dockerClient, err := docker.New(r.Context(), dockerHost)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create docker client: %v", err), http.StatusInternalServerError)
+			return
+		}
 		freshScan(w, dockerClient, redisClient)
 	})
 	router.Handle("GET /static/", http.FileServer(http.FS(staticFS)))

@@ -48,10 +48,10 @@ func listenForContainersEvent(ctx context.Context, dockerClient *docker.ClientIm
 			switch event.Action {
 			case events.ActionStart:
 				log.Debug().Str("containerId", event.Actor.ID).Msg("Container started")
-				_ = traefik.AddContainerToTraefik(dockerClient, redisClient, event.Actor.ID)
+				_ = traefik.AddContainerToTraefik(*dockerClient, redisClient, event.Actor.ID)
 			case events.ActionStop:
 				log.Debug().Str("containerId", event.Actor.ID).Msg("Container stopped")
-				traefik.RemoveContainerFromTraefik(dockerClient, redisClient, event.Actor.ID)
+				traefik.RemoveContainerFromTraefik(*dockerClient, redisClient, event.Actor.ID)
 			}
 		case err := <-errors:
 			return err

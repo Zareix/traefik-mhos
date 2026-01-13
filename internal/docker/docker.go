@@ -2,6 +2,8 @@ package docker
 
 import (
 	"context"
+	"net/url"
+	"traefik-multi-hosts/internal/config"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
@@ -15,19 +17,43 @@ type Client interface {
 }
 
 type ClientImpl struct {
-	ctx context.Context
-	API *client.Client
+	ctx    context.Context
+	API    *client.Client
+	HostIp string
 }
 
-func New(ctx context.Context) (*ClientImpl, error) {
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+func NewDefault(ctx context.Context) (*ClientImpl, error) {
+	return New(ctx, "")
+}
+
+func New(ctx context.Context, dockerHost string) (*ClientImpl, error) {
+	var dockerClient *client.Client
+	var err error
+	if dockerHost != "" {
+		dockerClient, err = client.NewClientWithOpts(client.WithHost(dockerHost), client.WithAPIVersionNegotiation())
+	} else {
+		dockerClient, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	}
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create docker dockerClient")
 		return nil, err
 	}
+
+	var hostIp string
+	if dockerHost != "" && dockerHost != "unix:///var/run/docker.sock" {
+		parsedUrl, err := url.Parse(dockerHost)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to parse docker host URL")
+			return nil, err
+		}
+		hostIp = parsedUrl.Hostname()
+	} else {
+		hostIp = config.HostIP()
+	}
 	return &ClientImpl{
-		ctx: ctx,
-		API: dockerClient,
+		ctx:    ctx,
+		API:    dockerClient,
+		HostIp: hostIp,
 	}, nil
 }
 

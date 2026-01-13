@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"traefik-multi-hosts/internal/config"
 	"traefik-multi-hosts/internal/docker"
 	"traefik-multi-hosts/internal/redis"
 
@@ -20,7 +19,7 @@ func GetFirstExposedPort(container container.InspectResponse) string {
 	return ""
 }
 
-func AddContainerToTraefik(dockerClient docker.Client, redisClient redis.Client, containerId string) error {
+func AddContainerToTraefik(dockerClient docker.ClientImpl, redisClient redis.Client, containerId string) error {
 	inspectResponse, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect inspectResponse")
@@ -75,14 +74,14 @@ func AddContainerToTraefik(dockerClient docker.Client, redisClient redis.Client,
 
 	log.Debug().Str("serviceName", serviceName).Str("servicePort", servicePort).Msg("Adding service to traefik")
 	kv["traefik/http/routers/"+serviceName+"/service"] = serviceName
-	kv["traefik/http/services/"+serviceName+"/loadbalancer/servers/0/url"] = fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)
+	kv["traefik/http/services/"+serviceName+"/loadbalancer/servers/0/url"] = fmt.Sprintf("http://%s:%s", dockerClient.HostIp, servicePort)
 
-	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", config.HostIP(), servicePort)).Msg("Adding service to traefik")
-	redisClient.SaveService(serviceName, kv)
+	log.Info().Str("serviceName", serviceName).Str("rule", routerRule).Str("target", fmt.Sprintf("http://%s:%s", dockerClient.HostIp, servicePort)).Msg("Adding service to traefik")
+	redisClient.SaveService(serviceName, dockerClient.HostIp, kv)
 	return nil
 }
 
-func RemoveContainerFromTraefik(dockerClient docker.Client, redisClient redis.Client, containerId string) {
+func RemoveContainerFromTraefik(dockerClient docker.ClientImpl, redisClient redis.Client, containerId string) {
 	inspectResponse, err := dockerClient.InspectContainer(containerId)
 	if err != nil {
 		log.Error().Err(err).Str("containerId", containerId).Msg("Failed to inspect inspectResponse")
@@ -102,5 +101,5 @@ func RemoveContainerFromTraefik(dockerClient docker.Client, redisClient redis.Cl
 	}
 
 	log.Info().Str("serviceName", serviceName).Msg("Removing service from traefik")
-	redisClient.RemoveService(serviceName)
+	redisClient.RemoveService(serviceName, dockerClient.HostIp)
 }
