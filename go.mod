@@ -6,7 +6,7 @@ toolchain go1.26.0
 
 require (
 	github.com/docker/docker v28.5.2+incompatible
-	github.com/redis/go-redis/v9 v9.17.3
+	github.com/redis/go-redis/v9 v9.18.0
 	github.com/rs/zerolog v1.34.0
 )
 
@@ -43,5 +43,6 @@ require (
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 )
