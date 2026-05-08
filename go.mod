@@ -2,7 +2,7 @@ module traefik-multi-hosts
 
 go 1.24
 
-toolchain go1.26.2
+toolchain go1.26.3
 
 require (
 	github.com/docker/docker v28.5.2+incompatible
