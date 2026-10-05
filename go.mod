@@ -1,12 +1,12 @@
 module traefik-multi-hosts
 
-go 1.24
+go 1.26.0
 
 toolchain go1.26.4
 
 require (
 	github.com/docker/docker v28.5.2+incompatible
-	github.com/redis/go-redis/v9 v9.20.1
+	github.com/redis/go-redis/v9 v9.23.0
 	github.com/rs/zerolog v1.35.1
 )
 
@@ -43,6 +43,6 @@ require (
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	go.uber.org/atomic v1.12.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
